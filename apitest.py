@@ -3,17 +3,18 @@
 # encoding: utf-8
 #客户端调用，用于查看API返回结果
 
-from OkcoinSpotAPI import OKCoinSpot
-from OkcoinFutureAPI import OKCoinFuture
-import Key
-import Config
 import ast
 import json
+from okcoin.OkcoinSpotAPI import OKCoinSpot
+from okcoin.OkcoinFutureAPI import OKCoinFuture
+from okcoin.key import *
+from okcoin.config import *
+
 
 #初始化apikey，secretkey,url
-apikey = Key.api_key
-secretkey = Key.secret_key
-okcoinRESTURL = Config.url_cn
+apikey = api_key
+secretkey = secret_key
+okcoinRESTURL = url_cn
 
 #现货API
 okcoinSpot = OKCoinSpot(okcoinRESTURL,apikey,secretkey)
@@ -21,9 +22,12 @@ okcoinSpot = OKCoinSpot(okcoinRESTURL,apikey,secretkey)
 #期货API
 okcoinFuture = OKCoinFuture(okcoinRESTURL,apikey,secretkey)
 
-print (u' 现货行情 ')
-ticker  = okcoinSpot.ticker('btc_usd')
-print (float(ticker['ticker']['buy'])  + 0.01)
+#print (u' 现货行情 ')
+#ticker  = okcoinSpot.ticker('btc_usd')
+#print (float(ticker['ticker']['buy'])  + 0.01)
+
+print(u'历史交易信息')
+print(okcoinSpot.tradeHistory('ltc_cny'))
 
 
 #print (u' 现货深度 ')

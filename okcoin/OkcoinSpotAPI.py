@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #用于访问OKCOIN 现货REST API
-from HttpMD5Util import buildMySign,httpGet,httpPost
+from okcoin.HttpMD5Util import buildMySign,httpGet,httpPost
 
 class OKCoinSpot:
 
@@ -128,3 +128,14 @@ class OKCoinSpot:
            }
            params['sign'] = buildMySign(params,self.__secretkey)
            return httpPost(self.__url,ORDER_HISTORY_RESOURCE,params)
+
+    #trade_history.do
+    def tradeHistory(self, symbol, since):
+        TRADE_HISTORY_RESOURCE = "/api/v1/trade_history.do"
+        params = {
+            'api_key':self.__apikey,
+            'symbol':symbol,
+            'since': since
+        }
+        params['sign'] = buildMySign(params,self.__secretkey)
+        return httpPost(self.__url, TRADE_HISTORY_RESOURCE, params)
