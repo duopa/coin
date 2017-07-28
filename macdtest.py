@@ -22,3 +22,6 @@ def test_should_stop_loss_shoud_return_false():
 
 test_should_stop_loss_shoud_return_true()
 test_should_stop_loss_shoud_return_false()
+
+date = int(json.loads(ticker)['date'])
+print(date)

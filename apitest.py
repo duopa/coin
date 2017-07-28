@@ -5,6 +5,7 @@
 
 import ast
 import json
+import time
 from okcoin.OkcoinSpotAPI import OKCoinSpot
 from okcoin.OkcoinFutureAPI import OKCoinFuture
 from okcoin.key import *
@@ -26,9 +27,8 @@ okcoinFuture = OKCoinFuture(okcoinRESTURL,apikey,secretkey)
 #ticker  = okcoinSpot.ticker('btc_usd')
 #print (float(ticker['ticker']['buy'])  + 0.01)
 
-print(u'历史交易信息')
-print(okcoinSpot.tradeHistory('ltc_cny'))
-
+#print(u'历史交易信息')
+#print(okcoinSpot.tradeHistory('ltc_cny'))
 
 #print (u' 现货深度 ')
 #print (okcoinSpot.depth('btc_usd'))
@@ -39,6 +39,12 @@ print(okcoinSpot.tradeHistory('ltc_cny'))
 #print (u' 用户现货账户信息 ')
 #userinfo = okcoinSpot.userinfo()
 #print (json.loads(userinfo)['info'])
+
+print(u'K线图数据')
+for i in range(1, 6):
+    kline = okcoinSpot.kline('eth_cny', '3min', 3)
+    print(kline)
+    #time.sleep(3)
 
 #print (u' 现货下单 ')
 #print (okcoinSpot.trade('ltc_usd','buy','0.1','0.2'))
