@@ -30,7 +30,6 @@ class OkCoin:
         self._frequency = frequency
         self._funds = {}
         self._last_long_order_id = 0
-        self._last_long_price = 0.0
         self._last_short_order_id = 0
 
     #
@@ -52,22 +51,30 @@ class OkCoin:
     #
     def process(self):
         try:
+            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print('======>>>process start at %(now)s ...' %{'now':now})
             with self._mutex:  # make sure only one thread is modifying counter at a given time
             #okcoinSpot = OKCoinSpot(okcoinRESTURL,apikey,secretkey)
             #macd data
                 kline = self._okcoinSpot.kline(self._symbol, self._type, 130, '')
                 ticker = self._okcoinSpot.ticker(self._symbol)
-                #这里的self._last_long_price 从服务端的order 获得更make sense
-                if self._macd_strategy.should_stop_loss(ticker, self._last_long_price):
-                    signal = 's'
-                else:
-                    signal = self._macd_strategy.execute(kline)
+                avglongprice = self._get_last_n_long_avg_price(2, 5)
+                signal = self._macd_strategy.execute(kline, ticker, avglongprice)
 
-                if signal == 'l':
+                if signal == 'sl':
+                    print('\tstop loss')
+                    #低于当前卖价卖出
+                    price = float(ticker['ticker']['sell']) - 0.01
+                    self._short(ticker, price)
+                elif signal == 'l':
                     self._long(ticker)
                 elif signal == 's':
-                    self._short(ticker)
-                print('---------------------------------------------')
+                    #低于当前卖价卖出
+                    price = float(ticker['ticker']['sell']) - 0.01
+                    if not self._is_reasonalbe_short_price(price, avglongprice, 1.01):#上涨0.8,两倍的交易成本
+                        return
+                    self._short(ticker, price)
+                print('---------------------------------------------------')
                 print('')
         except:
             tb = traceback.format_exc()
@@ -77,6 +84,7 @@ class OkCoin:
     def _update_user_info(self):
         print('------OkCoin:update_user_info------')
         userinfo = json.loads(self._okcoinSpot.userinfo())
+        print(userinfo)
         if userinfo['result']:
             self._funds = userinfo['info']['funds']
         else:
@@ -84,9 +92,10 @@ class OkCoin:
 
     def _long(self, ticker):
         print('------OkCoin:long------')
+        self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
         holding = float(self._funds['free'][self._symbol[0:3]])
-        if holding > 0:
+        if holding > 0.01:
             return
 
         price = float(ticker['ticker']['buy'])
@@ -95,36 +104,32 @@ class OkCoin:
         self._print_trade('long', price, amount, ticker)
         if amount <= 0:
             return
-        trade_result = self._okcoinSpot.trade(self._symbol, 'buy', price, amount)
+        trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'buy', price, amount))
         if trade_result['result']:
             self._last_long_order_id = trade_result['order_id']
-            print('  long order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
+            print('\tlong order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
             #从服务端order中获得更make sense
-            self._last_long_price = price
+            #self._last_long_price = price
         else:
-            print('  long order placed failed')
-        self._update_user_info()
+            print('\tlong order placed failed')
+        #self._update_user_info()
 
-    def _short(self, ticker):
+    def _short(self, ticker, price):
         print('------OkCoin:short------')
-        #低于当前卖价卖出
-        price = float(ticker['ticker']['sell']) - 0.01       
-        if not self._is_reasonalbe_short_price(price, 1.008):#上涨0.8,两倍的交易成本
-            return 
+        self._update_user_info()
         #available for sale
-        afs = float(self._funds['free'][self._symbol[0:3]])        
+        afs = float(self._funds['free'][self._symbol[0:3]])
         self._print_trade('short', price, afs, ticker)
         if afs <= 0:
             return
-        trade_result = self._okcoinSpot.trade(self._symbol, 'sell', price, afs)
+        trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'sell', price, afs))
         if trade_result['result']:
             self._last_short_order_id = trade_result['order_id']
-            print('  short order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
-            #从服务端order中获得更make sense
-            self._last_long_price = price
+            print('\tshort order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
         else:
-            print('  short order placed failed')
-        self._update_user_info()
+            print('\tshort order placed failed')
+            print('\t%(traderesult)s' %{'traderesult': trade_result})
+        #self._update_user_info()
 
     def _amount_to_buy(self, price, free_money):        
         if self._symbol == 'ltc_cny':
@@ -152,12 +157,26 @@ class OkCoin:
             return amount
 
     #有一个合理的涨幅才卖,只是能cover交易费用0.4%
-    def _is_reasonalbe_short_price(self, price, multi):
-        if price < self._last_long_price * multi:
+    def _is_reasonalbe_short_price(self, price, avglongprice, multi):
+        if price < avglongprice * multi:
             return False
         else:
             return True
 
+    ### 获得前n次买入的平均价格
+    def _get_last_n_long_avg_price(self, nlong, historycount):
+        orderhistory = json.loads(self._okcoinSpot.orderHistory('eth_cny', '2', '1', historycount))
+        if orderhistory['result']:
+            orders = orderhistory['orders']
+            totalprice = 0.0
+            checknum = nlong
+            for i in range(-len(orders), -1):
+                if checknum > 0 and orders[i]['type'] == 'buy':
+                    totalprice += orders[i]['avg_price']
+                    checknum -= 1
+            return totalprice / nlong
+        else:
+            return 0
 
     def _print_trade(self, direction, price, amount, ticker):
         date = datetime.fromtimestamp(int(ticker['date']))
