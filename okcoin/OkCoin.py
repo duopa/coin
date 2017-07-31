@@ -161,7 +161,7 @@ class OkCoin:
 
     ### 获得前n次买入的平均价格
     def _get_last_n_long_avg_price(self, nlong, historycount):
-        orderhistory = json.loads(self._okcoinSpot.orderHistory('eth_cny', '2', '1', historycount))
+        orderhistory = json.loads(self._okcoinSpot.orderHistory(self._symbol, '2', '1', historycount))
         if orderhistory['result']:
             orders = orderhistory['orders']
             totalprice = 0.0
