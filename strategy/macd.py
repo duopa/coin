@@ -42,10 +42,12 @@ class MacdStrategy:
         isdifabovedeabacknperiods = self._is_dif_above_dea_back_n_periods(macd, macdsignal, 8)
         ishighesthist = self._is_highest_hist(macdhist)
         ispredifdeafarenough = self._is_pre_dif_dea_far_enough(macd, macdsignal)
+        '''
         try:
             print('\tshot_signal: %(a)s %(b)s %(c)s %(d)s' %{'a': isslopechangingtonegtive, 'b': isdifabovedeabacknperiods, 'c': ishighesthist, 'd':ispredifdeafarenough})
         except:
             pass
+        '''
         return isslopechangingtonegtive and (isdifabovedeabacknperiods or ishighesthist or ispredifdeafarenough)
 
     ### top loss signal
@@ -172,7 +174,7 @@ class MacdStrategy:
             return False
 
     # 判断dif和dea的距离,距离越大表示信号越强
-    def _is_pre_dif_dea_far_enough(self, dif, dea):
+    def _is_pre_dif_dea_far_enough(self, dif, dea, distance=0.3):
         max_v = abs(dif[-2])
         min_v = abs(dea[-2])
         #swap
@@ -182,7 +184,7 @@ class MacdStrategy:
             max_v = max_v - min_v
 
         result = (max_v - min_v) / max_v
-        if result > 0.3:
+        if result > distance:
             return True
         return False
 

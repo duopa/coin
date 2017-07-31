@@ -1,4 +1,4 @@
-from okcoin.OkCoin import *
+from okcoin.OkCoin import OkCoin
 
-okcoin = OkCoin('eth_cny', '3min', 175)
-okcoin.run()
+coin = OkCoin('ltc_cny', '3min', 175)
+coin.run()
