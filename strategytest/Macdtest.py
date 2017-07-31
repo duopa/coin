@@ -50,19 +50,7 @@ def test_short_signal_should_return_false():
         print('test_short_signal_should_return_false failed')
 
 ##################################################################
-def test_is_dif_above_dea_back_n_periods_should_return_true():
-    result = macd._is_dif_above_dea_back_n_periods([0.1, -0.2, 0.3, 0.4], [0.2, -0.4, 0, 0.1], 3)
-    if result == True:
-        print('test_is_dif_above_dea_back_n_periods_should_return_true pass')
-    else:
-        print('test_is_dif_above_dea_back_n_periods_should_return_true failed')
 
-def test_is_dif_above_dea_back_n_periods_should_return_false():
-    result = macd._is_dif_above_dea_back_n_periods([0.2, -0.4, 0, 0.1], [0.1, -0.2, 0.3, 0.4], 3)
-    if result == False:
-        print('test_is_dif_above_dea_back_n_periods_should_return_true pass')
-    else:
-        print('test_is_dif_above_dea_back_n_periods_should_return_true failed')
 
 def test_is_dif_under_dea_back_n_periods_should_return_true():
     result = macd._is_dif_under_dea_back_n_periods([0.2, -0.4, 0, 0.1],[0.1, -0.2, 0.3, 0.4], 3)

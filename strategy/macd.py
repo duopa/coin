@@ -43,6 +43,10 @@ class MacdStrategy:
         isdifabovedeabacknperiods = self._is_dif_above_dea_back_n_periods(macd, macdsignal, 8)
         ishighesthist = self._is_highest_hist(macdhist)
         ispredifdeafarenough = self._is_pre_dif_dea_far_enough(macd, macdsignal)
+        try:
+            print('\tshot_signal: %(a)s %(b)s %(c)s %(d)s' %{'a': isslopechangingtonegtive, 'b': isdifabovedeabacknperiods, 'c': ishighesthist, 'd':ispredifdeafarenough})
+        except:
+            pass
         return isslopechangingtonegtive and (isdifabovedeabacknperiods or ishighesthist or ispredifdeafarenough)
 
     ### top loss signal
@@ -176,6 +180,7 @@ class MacdStrategy:
         if max_v < min_v:
             max_v = max_v + min_v
             min_v = max_v - min_v
+            max_v = max_v - min_v
 
         result = (max_v - min_v) / max_v
         if result > 0.3:
@@ -200,4 +205,6 @@ class MacdStrategy:
                 continue
             elif dif[i+1] < 0:
                 return True
+            else:
+                return False
         return False
