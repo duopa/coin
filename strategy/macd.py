@@ -34,7 +34,6 @@ class MacdStrategy:
         return (macd[-1] < 0) and (macdsignal[-1] < 0) \
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
-        and self._is_dif_negtive_when_hist_changeing_to_negtive(macd, macdhist) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
     #### short signal
@@ -200,11 +199,15 @@ class MacdStrategy:
         '''
         用于买入前判断当最近一次hist又0轴上变成0轴下时,diff是否已经在0轴下, 如果在则返回true
         '''
+        index = -1
         for i in range(-1, -len(hist), -1):
-            if hist[i] < 0:
+            if hist[i] <= 0:
                 continue
-            elif dif[i+1] < 0:
-                return True
             else:
-                return False
-        return False
+                index = i
+                break
+
+        if dif[index] < 0:
+            return True
+        else:
+            return False

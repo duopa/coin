@@ -71,9 +71,8 @@ class OkCoin:
                 elif signal == 's':
                     #低于当前卖价卖出
                     price = float(ticker['ticker']['sell']) - 0.01
-                    if not self._is_reasonalbe_short_price(price, avglongprice, 1.008):#上涨0.8,两倍的交易成本
-                        return
-                    self._short(ticker, price)
+                    if self._is_reasonalbe_short_price(price, avglongprice, 1.008):#上涨0.8,两倍的交易成本
+                        self._short(ticker, price)
                 print('---------------------------------------------------')
                 print('')
         except:
@@ -135,20 +134,17 @@ class OkCoin:
         if self._symbol == 'ltc_cny':
             unit = 0.1
             rnd = 1
-            multi = 10
         elif self._symbol == 'btc_cny':
             unit = 0.01
             rnd = 2
-            multi = 100
         elif self._symbol == 'eth_cny':
             unit = 0.01
             rnd = 2
-            multi = 100
-        
+
         amount = free_money / price
         if amount < unit:
             return 0
-        
+
         #买入1/5
         amount = round(amount / 3, rnd)
         if amount < unit:
