@@ -12,18 +12,13 @@ class MacdStrategy:
     #execute strategy
     def execute(self, kline, ticker, long_price, avg_long_price):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})
-        highest_price = self._get_highest_price_from_kline(kline)
-        close_list = self._get_close_from_kline(kline)
-        close = numpy.array(close_list)
-
-        #dif, dea, diff - dea?
-        macd, macdsignal, macdhist = talib.MACD(close, fastperiod=12, slowperiod=26, signalperiod=9)
+        print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})                
+        
         if self._should_stop_loss(ticker, avg_long_price):
             return 'sl'
-        elif self._long_signal(macd, macdsignal, macdhist, long_price, highest_price):
+        elif self._long_signal(kline, long_price):
             return 'l'
-        elif self._short_signal(macd, macdsignal, macdhist):
+        elif self._short_signal(kline):
             return 's'
         else:
             return ''
@@ -32,15 +27,19 @@ class MacdStrategy:
         #print(macdhist)
 
     ### long signal
-    def _long_signal(self, macd, macdsignal, macdhist, long_price, highest_price):
+    def _long_signal(self, kline, long_price):
+        #dif, dea, diff - dea?
+        macd, macdsignal, macdhist = self._get_macd(kline)
         return (macd[-1] < 0) and (macdsignal[-1] < 0) \
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
-        and self._is_long_price_under_highest_price_percent(long_price, highest_price) \
+        and self._is_long_price_under_highest_price_percent(kline, long_price) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
     #### short signal
-    def _short_signal(self, macd, macdsignal, macdhist):
+    def _short_signal(self, kline):
+        #dif, dea, diff - dea?
+        macd, macdsignal, macdhist = self._get_macd(kline)
         isslopechangingtonegtive = self._is_slope_changing_to_negtive(macd)
         isdifabovedeabacknperiods = self._is_dif_above_dea_back_n_periods(macd, macdsignal, 8)
         ishighesthist = self._is_highest_hist(macdhist)
@@ -209,11 +208,15 @@ class MacdStrategy:
             return False
 
     ###
-    def _is_long_price_under_highest_price_percent(self, long_price, highest_price, percent=0.05):
+    def _is_long_price_under_highest_price_percent(self, kline, long_price, percent=0.05):
         '''
         只有买入价在最高价以下 percent%时才买入，防止持续下跌的第一次反弹就买入，此时买在半山腰
         '''
         #当long_price >= highest_price时,认为是在创新高,买入
+        highest_price, highest_index = self._get_highest_price_from_kline(kline)
+        #只有highest_price足够近时,才认为时下跌中继
+        if len(kline) - highest_index >=26:
+            highest_price = 1000000
         if long_price >= highest_price:
             return True
         else:
@@ -223,7 +226,13 @@ class MacdStrategy:
             else:
                 return False
 
-    ###--------------------------------helper-------------------------------    
+    ###--------------------------------helper-------------------------------
+    def _get_macd(self, kline):
+        close_list = self._get_close_from_kline(kline)
+        close = numpy.array(close_list)
+        #dif, dea, diff - dea?
+        return talib.MACD(close, fastperiod=12, slowperiod=26, signalperiod=9)
+
     ### get close price from kline
     def _get_close_from_kline(self, kline):
         close = []
@@ -233,5 +242,5 @@ class MacdStrategy:
 
     ###
     def _get_highest_price_from_kline(self, kline):
-        high_arr = map(lambda x: x[2], kline[0:99])
-        return max(high_arr)
+        high_arr = list(map(lambda x: x[2], kline[0:99]))
+        return max(high_arr), numpy.argmax(high_arr)

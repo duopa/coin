@@ -119,7 +119,7 @@ kline =[
     ]
 ]
 def test_get_highest_price_from_kline():
-    highest_price = macd._get_highest_price_from_kline(kline)
+    highest_price, index = macd._get_highest_price_from_kline(kline)
     if highest_price == 2383.15:
         print('test_get_highest_price_from_kline PASS')
     else:
