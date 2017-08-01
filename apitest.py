@@ -67,7 +67,7 @@ for i in range(1, 6):
 
 print (u' 现货历史订单信息查询')
 pagelength = 5
-orderhistory = okcoinSpot.orderHistory('eth_cny','2','1', pagelength)
+orderhistory = okcoinSpot.orderHistory('btc_cny','1','1', pagelength)
 orders = json.loads(orderhistory)['orders']       
 print(orders[0]['type'])
 print (orderhistory)

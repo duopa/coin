@@ -8,6 +8,7 @@ import threading
 import time
 import json
 import traceback
+import numpy
 from .key import *
 from .config import *
 from strategy import *
@@ -166,16 +167,17 @@ class OkCoin:
 
     ### 获得前n次买入的平均价格
     def _get_last_n_long_avg_price(self, nlong, historycount):
-        orderhistory = json.loads(self._okcoinSpot.orderHistory(self._symbol, '2', '1', historycount))
+        orderhistory = json.loads(self._okcoinSpot.orderHistory(self._symbol, '1', '1', historycount))
         if orderhistory['result']:
             orders = orderhistory['orders']
             totalprice = 0.0
             checknum = nlong
-            for i in range(-len(orders), -1):
-                if checknum > 0 and orders[i]['type'] == 'buy':
-                    totalprice += orders[i]['avg_price']
-                    checknum -= 1
-            return totalprice / nlong
+            long_price_his = []
+            for i in range(-len(orders), 0):
+                if len(long_price_his) < 2 and orders[i]['type'] == 'buy':
+                    long_price_his.append(orders[i]['avg_price'])
+                                
+            return numpy.mean(long_price_his)
         else:
             return 0
 
