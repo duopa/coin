@@ -90,3 +90,39 @@ def test_is_long_price_under_highest_price_percent_should_return_true():
 
 test_is_long_price_under_highest_price_percent_should_return_true()
 test_is_long_price_under_highest_price_percent_should_return_false()
+#-------------------------------------------------------------------------------------------------------------------
+
+kline =[
+    [
+        1417536000000,
+        2370.16,
+        2180,
+        2352,
+        2367.37,
+        17259.83
+    ],
+    [
+        1417449600000,
+        2339.11,
+        2383.15,
+        2322,
+        2369.85,
+        83850.06
+    ],
+    [
+        1417536000000,
+        2370.16,
+        2380,
+        2352,
+        2367.37,
+        17259.83
+    ]
+]
+def test_get_highest_price():
+    highest_price = macd._get_highest_price(kline)
+    if highest_price == 2383.15:
+        print('test_get_highest_price PASS')
+    else:
+        print('test_get_highest_price FAILED<<<---')
+
+test_get_highest_price()

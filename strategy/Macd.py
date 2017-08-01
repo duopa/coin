@@ -10,16 +10,18 @@ class MacdStrategy:
         pass
 
     #execute strategy
-    def execute(self, kline, ticker, avglongprice):
+    def execute(self, kline, ticker, long_price, avg_long_price):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})
+        highest_price = self._get_highest_price_from_kline(kline)
         close_list = self._get_close_from_kline(kline)
         close = numpy.array(close_list)
+
         #dif, dea, diff - dea?
         macd, macdsignal, macdhist = talib.MACD(close, fastperiod=12, slowperiod=26, signalperiod=9)
-        if self._should_stop_loss(ticker, avglongprice):           
+        if self._should_stop_loss(ticker, avg_long_price):
             return 'sl'
-        elif self._long_signal(macd, macdsignal, macdhist):
+        elif self._long_signal(macd, macdsignal, macdhist, long_price, highest_price):
             return 'l'
         elif self._short_signal(macd, macdsignal, macdhist):
             return 's'
@@ -30,10 +32,11 @@ class MacdStrategy:
         #print(macdhist)
 
     ### long signal
-    def _long_signal(self, macd, macdsignal, macdhist):
+    def _long_signal(self, macd, macdsignal, macdhist, long_price, highest_price):
         return (macd[-1] < 0) and (macdsignal[-1] < 0) \
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
+        and self._is_long_price_under_highest_price_percent(long_price, highest_price) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
     #### short signal
@@ -212,6 +215,7 @@ class MacdStrategy:
         '''
         只有买入价在最高价以下 percent%时才买入，防止持续下跌的第一次反弹就买入，此时买在半山腰
         '''
+        #当long_price >= highest_price时,认为是在创新高,买入
         if long_price >= highest_price:
             return True
         else:
@@ -230,6 +234,6 @@ class MacdStrategy:
         return close
 
     ###
-    def _get_highest_price(self, kline):
+    def _get_highest_price_from_kline(self, kline):
         high_arr = map(lambda x: x[2], kline)
         return max(high_arr)

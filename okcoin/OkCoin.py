@@ -58,8 +58,9 @@ class OkCoin:
             #macd data
                 kline = self._okcoinSpot.kline(self._symbol, self._type, 130, '')
                 ticker = self._okcoinSpot.ticker(self._symbol)
-                avglongprice = self._get_last_n_long_avg_price(2, 5)
-                signal = self._macd_strategy.execute(kline, ticker, avglongprice)
+                long_price = float(ticker['ticker']['buy'])
+                avg_long_price = self._get_last_n_long_avg_price(2, 5)
+                signal = self._macd_strategy.execute(kline, ticker, long_price, avg_long_price)
 
                 if signal == 'sl':
                     print('\tstop loss')
@@ -67,14 +68,14 @@ class OkCoin:
                     price = float(ticker['ticker']['sell']) - 0.01
                     self._short(ticker, price)
                 elif signal == 'l':
-                    self._long(ticker)
+                    self._long(ticker, long_price)
                 elif signal == 's':
                     #低于当前卖价卖出
                     price = float(ticker['ticker']['sell']) - 0.01
                     #上涨0.8%,两倍的交易成本
-                    if self._is_reasonalbe_short_price(price, avglongprice, 1.008):
+                    if self._is_reasonalbe_short_price(price, avg_long_price, 1.01):
                         self._short(ticker, price)
-                        print('\t short price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avglongprice})
+                        print('\t short price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})
                 print('---------------------------------------------------')
                 print('')
         except:
@@ -91,7 +92,7 @@ class OkCoin:
         else:
             print('_update_user_info failed<<<---')
 
-    def _long(self, ticker):
+    def _long(self, ticker, price):
         print('------OkCoin:long------')
         self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
@@ -99,7 +100,6 @@ class OkCoin:
         if holding > 0.01:
             return
 
-        price = float(ticker['ticker']['buy'])
         free_money = float(self._funds['free']['cny'])
         amount = self._amount_to_buy(price, free_money)
         self._print_trade('long', price, amount, ticker)
@@ -155,8 +155,11 @@ class OkCoin:
             return amount
 
     #有一个合理的涨幅才卖,只是能cover交易费用0.4%
-    def _is_reasonalbe_short_price(self, price, avglongprice, multi):
-        if price < avglongprice * multi:
+    def _is_reasonalbe_short_price(self, short_price, avg_long_price, multi):
+        if short_price <= avg_long_price:
+            return False
+
+        if short_price < avg_long_price * multi:
             return False
         else:
             return True
