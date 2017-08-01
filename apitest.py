@@ -42,13 +42,13 @@ print (okcoinSpot.trades())
 #userinfo = okcoinSpot.userinfo()
 #print (json.loads(userinfo)['info'])
 
-'''
+
 print(u'K线图数据')
 for i in range(1, 6):
-    kline = okcoinSpot.kline('eth_cny', '3min', 3)
+    kline = okcoinSpot.kline('eth_cny', '3min', 6)
     print(kline)
     #time.sleep(3)
-'''
+
 
 #print (u' 现货下单 ')
 #print (okcoinSpot.trade('ltc_usd','buy','0.1','0.2'))
@@ -65,12 +65,14 @@ for i in range(1, 6):
 #print (u' 现货批量订单信息查询 ')
 #print (okcoinSpot.ordersinfo('ltc_usd','18243800,18243801,18243644','0'))
 
+'''
 print (u' 现货历史订单信息查询')
 pagelength = 5
 orderhistory = okcoinSpot.orderHistory('btc_cny','1','1', pagelength)
 orders = json.loads(orderhistory)['orders']       
 print(orders[0]['type'])
 print (orderhistory)
+'''
 
 #print (u' 期货行情信息')
 #print (okcoinFuture.future_ticker('ltc_usd','this_week'))

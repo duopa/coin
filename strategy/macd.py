@@ -233,5 +233,5 @@ class MacdStrategy:
 
     ###
     def _get_highest_price_from_kline(self, kline):
-        high_arr = map(lambda x: x[2], kline)
+        high_arr = map(lambda x: x[2], kline[0:99])
         return max(high_arr)
