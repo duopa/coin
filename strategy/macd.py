@@ -54,12 +54,10 @@ class MacdStrategy:
         return isslopechangingtonegtive and (isdifabovedeabacknperiods or ishighesthist or ispredifdeafarenough)
 
     ### top loss signal
-    def _should_stop_loss(self, ticker, avglongprice):
+    def _should_stop_loss(self, ticker, avg_long_price, loss_percent=0.02):
         last = float(ticker['ticker']['last'])
-        if last < avglongprice:
-            loss = (avglongprice - last)/avglongprice
-            if loss >= 0.02:
-                return True
+        if last <= (avg_long_price * (1- loss_percent)):
+            return True
         return False
 
     ### whether slope of dif line head up

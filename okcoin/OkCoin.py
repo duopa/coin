@@ -170,14 +170,18 @@ class OkCoin:
         orderhistory = json.loads(self._okcoinSpot.orderHistory(self._symbol, '1', '1', historycount))
         if orderhistory['result']:
             orders = orderhistory['orders']
-            totalprice = 0.0
-            checknum = nlong
             long_price_his = []
             for i in range(-len(orders), 0):
-                if len(long_price_his) < 2 and orders[i]['type'] == 'buy':
+                if orders[i]['type'] == 'sell':
+                    break
+                if len(long_price_his) < nlong:
                     long_price_his.append(orders[i]['avg_price'])
-                                
-            return numpy.mean(long_price_his)
+                else:
+                    break
+            if len(long_price_his) > 0:
+                return numpy.mean(long_price_his)
+            else:
+                return 0
         else:
             return 0
 
