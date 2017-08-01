@@ -71,8 +71,10 @@ class OkCoin:
                 elif signal == 's':
                     #低于当前卖价卖出
                     price = float(ticker['ticker']['sell']) - 0.01
-                    if self._is_reasonalbe_short_price(price, avglongprice, 1.008):#上涨0.8,两倍的交易成本
+                    #上涨0.8%,两倍的交易成本
+                    if self._is_reasonalbe_short_price(price, avglongprice, 1.008):
                         self._short(ticker, price)
+                        print('\t short price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avglongprice})
                 print('---------------------------------------------------')
                 print('')
         except:

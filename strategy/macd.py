@@ -59,13 +59,6 @@ class MacdStrategy:
                 return True
         return False
 
-    ### get close price from kline
-    def _get_close_from_kline(self, kline):
-        close = []
-        for arr in kline:
-            close.append(arr[4])
-        return close
-
     ### whether slope of dif line head up
     def _is_slope_changing_to_positive(self, linedata):
         '''
@@ -213,3 +206,30 @@ class MacdStrategy:
             return True
         else:
             return False
+
+    ###
+    def _is_long_price_under_highest_price_percent(self, long_price, highest_price, percent=0.05):
+        '''
+        只有买入价在最高价以下 percent%时才买入，防止持续下跌的第一次反弹就买入，此时买在半山腰
+        '''
+        if long_price >= highest_price:
+            return True
+        else:
+            diff = highest_price * (1-percent)
+            if long_price > diff:
+                return False
+            else:
+                return True
+
+    ###--------------------------------helper-------------------------------    
+    ### get close price from kline
+    def _get_close_from_kline(self, kline):
+        close = []
+        for arr in kline:
+            close.append(arr[4])
+        return close
+
+    ###
+    def _get_highest_price(self, kline):
+        high_arr = map(lambda x: x[2], kline)
+        return max(high_arr)

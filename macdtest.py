@@ -30,7 +30,7 @@ print(date)
 
 #-----------------------------------------------------------------------------------------------------------------------
 def _is_dif_negtive_when_hist_changeing_to_negtive_should_return_true():
-    result = macd._is_dif_negtive_when_hist_changeing_to_negtive([1, 2, 3, -4, -5, -6, -7], [1, 2, 3, -1, -2, -3, -4])
+    result = macd._is_dif_negtive_when_hist_changeing_to_negtive([1, 2, -3, -4, -5, -6, -7], [1, 2, 3, -1, -2, -3, -4])
     if result:
         print('_is_dif_negtive_when_hist_changeing_to_negtive_should_return_true PASS')
     else:
@@ -72,3 +72,21 @@ def test_is_pre_dif_dea_far_enough_should_return_false():
         print('test_is_pre_dif_dea_far_enough_should_return_false FAILED')
 
 test_is_pre_dif_dea_far_enough_should_return_false()
+
+#------------------------------------------------------------------------------------------------------------------
+def test_is_long_price_under_highest_price_percent_should_return_false():
+    result = macd._is_long_price_under_highest_price_percent(18621, 19600)
+    if not result:
+        print('test_is_long_price_under_highest_price_percent_should_return_false PASS')
+    else:
+        print('test_is_long_price_under_highest_price_percent_should_return_false FAILED<<<------')
+
+def test_is_long_price_under_highest_price_percent_should_return_true():
+    result = macd._is_long_price_under_highest_price_percent(18620, 19600)
+    if result:
+        print('test_is_long_price_under_highest_price_percent_should_return_true PASS')
+    else:
+        print('test_is_long_price_under_highest_price_percent_should_return_true FAILED<<<------')
+
+test_is_long_price_under_highest_price_percent_should_return_true()
+test_is_long_price_under_highest_price_percent_should_return_false()

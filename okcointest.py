@@ -11,6 +11,9 @@ print(amount)
 '''
 
 
-okcoin = OkCoin('eth_cny','3min', 175)
-result = okcoin._is_reasonalbe_short_price(1366.46,1365, 1.008)
-print(result)
+okcoin = OkCoin('btc_cny','3min', 175)
+avg_price = okcoin._get_last_n_long_avg_price(2, 5)
+if okcoin._is_reasonalbe_short_price(19238.0, avg_price, 1.008):
+    print('short')
+else:
+    print(avg_price)
