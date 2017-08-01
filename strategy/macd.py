@@ -218,10 +218,10 @@ class MacdStrategy:
             return True
         else:
             diff = highest_price * (1-percent)
-            if long_price > diff:
-                return False
-            else:
+            if long_price <= diff:
                 return True
+            else:
+                return False
 
     ###--------------------------------helper-------------------------------    
     ### get close price from kline
