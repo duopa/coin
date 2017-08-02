@@ -76,7 +76,7 @@ class OkCoin:
                     #上涨0.8%,两倍的交易成本
                     if self._is_reasonalbe_short_price(price, avg_long_price, 1.01):
                         self._short(ticker, price)
-                        print('\t short price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})
+                        print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})
                 print('---------------------------------------------------')
                 print('')
         except:
@@ -97,12 +97,12 @@ class OkCoin:
         print('------OkCoin:long------')
         self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
+        '''
         holding = float(self._funds['free'][self._symbol[0:3]])
         if holding > 0.01:
             return
-
-        free_money = float(self._funds['free']['cny'])
-        amount = self._amount_to_buy(price, free_money)
+        '''
+        amount = self._amount_to_long(price)
         self._print_trade('long', price, amount, ticker)
         if amount <= 0:
             return
@@ -110,11 +110,8 @@ class OkCoin:
         if trade_result['result']:
             self._last_long_order_id = trade_result['order_id']
             print('\tlong order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
-            #从服务端order中获得更make sense
-            #self._last_long_price = price
         else:
-            print('\tlong order placed failed')
-        #self._update_user_info()
+            print('\t%(result)s' %{'result': trade_result})
 
     def _short(self, ticker, price):
         print('------OkCoin:short------')
@@ -130,8 +127,7 @@ class OkCoin:
             print('\tshort order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
         else:
             print('\tshort order placed failed')
-            print('\t%(traderesult)s' %{'traderesult': trade_result})
-        #self._update_user_info()
+            print('\t%(result)s' %{'result': trade_result})
 
     def _amount_to_buy(self, price, free_money):        
         if self._symbol == 'ltc_cny':
@@ -149,14 +145,41 @@ class OkCoin:
             return 0
 
         #买入1/5
-        amount = round(amount / 3, rnd)
+        amount = round(amount / 5, rnd)
+        if amount < unit:
+            return unit
+        else:
+            return amount
+        
+    def _amount_to_long(self, price):
+        '''
+        determine how many coins to buy base on total asset
+        '''
+        if self._symbol == 'ltc_cny':
+            unit = 0.1
+            rnd = 1
+        elif self._symbol == 'btc_cny':
+            unit = 0.01
+            rnd = 2
+        elif self._symbol == 'eth_cny':
+            unit = 0.01
+            rnd = 2
+        total = float(self._funds['asset']['total'])
+        free_money = float(self._funds['free']['cny']) 
+        purchase = total / 5
+        amount = 0
+        if free_money >= purchase:
+            amount = round(purchase / price, rnd)
+        else:
+            amount = round(free_money / price, rnd)
+
         if amount < unit:
             return unit
         else:
             return amount
 
     #有一个合理的涨幅才卖,只是能cover交易费用0.4%
-    def _is_reasonalbe_short_price(self, short_price, avg_long_price, multi):
+    def _is_reasonalbe_short_price(self, short_price, avg_long_price, multi=1.01):
         if short_price <= avg_long_price:
             return False
 
