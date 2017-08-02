@@ -60,7 +60,7 @@ class OkCoin:
                 kline = self._okcoinSpot.kline(self._symbol, self._type, 130, '')
                 ticker = self._okcoinSpot.ticker(self._symbol)
                 long_price = float(ticker['ticker']['buy'])
-                avg_long_price = self._get_last_n_long_avg_price(2, 5)
+                avg_long_price = self._get_last_n_long_avg_price(2, 6)
                 signal = self._macd_strategy.execute(kline, ticker, long_price, avg_long_price)
 
                 if signal == 'sl':
@@ -171,14 +171,20 @@ class OkCoin:
         if orderhistory['result']:
             orders = orderhistory['orders']
             long_price_his = []
+            size = 0
             for i in range(-len(orders), 0):
-                if orders[i]['type'] == 'sell':
+                if size >= nlong:
                     break
-                if len(long_price_his) < nlong:
-                    long_price_his.append(orders[i]['avg_price'])
-                else:
-                    break
-            if len(long_price_his) > 0:
+                order = orders[i]
+                if order['type'] == 'sell':
+                    continue
+                #status:-1:已撤销   0:未成交 1:部分成交 2:完全成交 4:撤单处理中
+                if order['status'] in [-1, 0, 4]:
+                    continue
+
+                long_price_his.append(order['avg_price'])
+                size = len(long_price_his)
+            if size > 0:
                 return numpy.mean(long_price_his)
             else:
                 return 0
