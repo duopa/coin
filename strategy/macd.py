@@ -242,5 +242,5 @@ class MacdStrategy:
 
     ###
     def _get_highest_price_from_kline(self, kline):
-        high_arr = list(map(lambda x: x[2], kline[0:99]))
+        high_arr = list(map(lambda x: x[2], kline))
         return max(high_arr), numpy.argmax(high_arr)

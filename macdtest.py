@@ -2,20 +2,29 @@ import sys
 import os
 import json
 from strategy import *
+from okcoin.OkcoinSpotAPI import OKCoinSpot
+from okcoin.key import *
+from okcoin.config import *
 
+
+#初始化apikey，secretkey,url
+apikey = api_key
+secretkey = secret_key
+okcoinRESTURL = url_cn
+okcoinSpot = OKCoinSpot(okcoinRESTURL,apikey,secretkey)
 macd = MacdStrategy()
 
-
+'''
 ticker = '{"date":"1410431279","ticker":{ "buy":"33.15","high":"34.15","last":"33.15","low":"32.05","sell":"33.16","vol":"10532696.39199642"}}'
 def test_should_stop_loss_shoud_return_true():
-    result = macd._should_stop_loss(json.loads(ticker), 34)
+    result = macd.should_stop_loss(json.loads(ticker), 34)
     if result == True:
         print('test_should_stop_loss_shoud_return_true pass')
     else:
         print('test_should_stop_loss_shoud_return_true failed')
 
 def test_should_stop_loss_shoud_return_false():
-    result = macd._should_stop_loss(json.loads(ticker), 33)
+    result = macd.should_stop_loss(json.loads(ticker), 33)
     if result == False:
         print('test_should_stop_loss_shoud_return_false pass')
     else:
@@ -26,7 +35,7 @@ test_should_stop_loss_shoud_return_false()
 
 date = int(json.loads(ticker)['date'])
 print(date)
-
+'''
 
 #-----------------------------------------------------------------------------------------------------------------------
 def _is_dif_negtive_when_hist_changeing_to_negtive_should_return_true():
@@ -75,14 +84,16 @@ test_is_pre_dif_dea_far_enough_should_return_false()
 
 #------------------------------------------------------------------------------------------------------------------
 def test_is_long_price_under_highest_price_percent_should_return_false():
-    result = macd._is_long_price_under_highest_price_percent(18621, 19600)
+    kline = okcoinSpot.kline('eth_cny', '3min', 130)
+    result = macd._is_long_price_under_highest_price_percent(kline,1516.2)
     if not result:
         print('test_is_long_price_under_highest_price_percent_should_return_false PASS')
     else:
         print('test_is_long_price_under_highest_price_percent_should_return_false FAILED<<<------')
 
 def test_is_long_price_under_highest_price_percent_should_return_true():
-    result = macd._is_long_price_under_highest_price_percent(18620, 19600)
+    kline = okcoinSpot.kline('eth_cny', '3min', 130)
+    result = macd._is_long_price_under_highest_price_percent(kline,1516.2)
     if result:
         print('test_is_long_price_under_highest_price_percent_should_return_true PASS')
     else:
@@ -118,11 +129,11 @@ kline =[
         17259.83
     ]
 ]
-def test_get_highest_price_from_kline():
-    highest_price, index = macd._get_highest_price_from_kline(kline)
+def test_get_highest_price():
+    highest_price = macd._get_highest_price_from_kline(kline)
     if highest_price == 2383.15:
-        print('test_get_highest_price_from_kline PASS')
+        print('test_get_highest_price PASS')
     else:
-        print('test_get_highest_price_from_kline FAILED<<<---')
+        print('test_get_highest_price FAILED<<<---')
 
-test_get_highest_price_from_kline()
+test_get_highest_price()
