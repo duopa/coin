@@ -44,13 +44,16 @@ class MacdStrategy:
         isdifabovedeabacknperiods = self._is_dif_above_dea_back_n_periods(macd, macdsignal, 8)
         ishighesthist = self._is_highest_hist(macdhist)
         ispredifdeafarenough = self._is_pre_dif_dea_far_enough(macd, macdsignal)
+        dif_above_zero_back_n_periods = self._is_dif_above_zero_back_n_periods(macd, 6)
         '''
         try:
             print('\tshot_signal: %(a)s %(b)s %(c)s %(d)s' %{'a': isslopechangingtonegtive, 'b': isdifabovedeabacknperiods, 'c': ishighesthist, 'd':ispredifdeafarenough})
         except:
             pass
         '''
-        return isslopechangingtonegtive and (isdifabovedeabacknperiods or ishighesthist or ispredifdeafarenough)
+        return isslopechangingtonegtive \
+        and dif_above_zero_back_n_periods \
+        and (isdifabovedeabacknperiods or ishighesthist or ispredifdeafarenough)
 
     ### top loss signal
     def _should_stop_loss(self, ticker, avg_long_price, loss_percent=0.02):
@@ -226,6 +229,15 @@ class MacdStrategy:
             else:
                 return False
 
+    def _is_dif_above_zero_back_n_periods(self, dif, periods=6):
+        '''
+        short:
+        判断dif是否已经在0轴上方n个周期, 避免假摔
+        '''
+        if dif[-periods] > 0:
+            return True
+        else:
+            return False
     ###--------------------------------helper-------------------------------
     def _get_macd(self, kline):
         close_list = self._get_close_from_kline(kline)
