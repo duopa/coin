@@ -19,7 +19,7 @@ class OkCoin:
     '''
     OkCoin
     '''
-    def __init__(self, symbol, type, frequency):
+    def __init__(self, symbol, time_type, frequency):
         self._apikey = api_key
         self._secretkey = secret_key
         self.stopped = False
@@ -27,9 +27,11 @@ class OkCoin:
         self._okcoinSpot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
         self._macd_strategy = MacdStrategy()
         self._symbol = symbol
-        self._type = type
+        self._coin_name = symbol[0:3]
+        self._type = time_type
         self._frequency = frequency
         self._funds = {}
+        self._ticker = {}
         self._last_long_order_id = 0
         self._last_short_order_id = 0
 
@@ -53,29 +55,29 @@ class OkCoin:
     def process(self):
         try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print('======>>>process start at %(now)s ...' %{'now':now})
+            print('======>>>process %(symbol)s start at %(now)s ...' %{'symbol': self._symbol, 'now':now})
             with self._mutex:  # make sure only one thread is modifying counter at a given time
             #okcoinSpot = OKCoinSpot(okcoinRESTURL,apikey,secretkey)
             #macd data
                 kline = self._okcoinSpot.kline(self._symbol, self._type, 130, '')
-                ticker = self._okcoinSpot.ticker(self._symbol)
-                long_price = float(ticker['ticker']['buy'])
+                self._ticker = self._okcoinSpot.ticker(self._symbol)
+                long_price = float(self._ticker['ticker']['buy'])
                 avg_long_price = self._get_last_n_long_avg_price(2, 6)
-                signal = self._macd_strategy.execute(kline, ticker, long_price, avg_long_price)
+                signal = self._macd_strategy.execute(kline, self._ticker, long_price, avg_long_price)
 
                 if signal == 'sl':
                     print('\tstop loss')
                     #低于当前卖价卖出
-                    price = float(ticker['ticker']['sell']) - 0.01
-                    self._short(ticker, price)
+                    price = float(self._ticker['ticker']['sell']) - 0.01
+                    self._short(price)
                 elif signal == 'l':
-                    self._long(ticker, long_price)
+                    self._long(long_price)
                 elif signal == 's':
                     #低于当前卖价卖出
-                    price = float(ticker['ticker']['sell']) - 0.01
+                    price = float(self._ticker['ticker']['sell']) - 0.01
                     #上涨0.8%,两倍的交易成本
                     if self._is_reasonalbe_short_price(price, avg_long_price, 1.01):
-                        self._short(ticker, price)
+                        self._short(price)
                         print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})
                 print('---------------------------------------------------')
                 print('')
@@ -93,7 +95,7 @@ class OkCoin:
         else:
             print('_update_user_info failed<<<---')
 
-    def _long(self, ticker, price):
+    def _long(self, price):
         print('------OkCoin:long------')
         self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
@@ -103,7 +105,7 @@ class OkCoin:
             return
         '''
         amount = self._amount_to_long(price)
-        self._print_trade('long', price, amount, ticker)
+        self._print_trade('long', price, amount)
         if amount <= 0:
             return
         trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'buy', price, amount))
@@ -113,12 +115,12 @@ class OkCoin:
         else:
             print('\t%(result)s' %{'result': trade_result})
 
-    def _short(self, ticker, price):
+    def _short(self, price):
         print('------OkCoin:short------')
         self._update_user_info()
         #available for sale
         afs = float(self._funds['free'][self._symbol[0:3]])
-        self._print_trade('short', price, afs, ticker)
+        self._print_trade('short', price, afs)
         if afs <= 0:
             return
         trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'sell', price, afs))
@@ -155,6 +157,13 @@ class OkCoin:
         '''
         determine how many coins to buy base on total asset
         '''
+        total = float(self._funds['asset']['total'])
+        free_money = float(self._funds['free']['cny'])
+        holding = float(self._funds['free'][self._coin_name])
+        if holding * price >= total * 0.6:
+            print('\t%(coin_name)s poisition too much' %{'coin_name':self._coin_name})
+            return 0
+
         if self._symbol == 'ltc_cny':
             unit = 0.1
             rnd = 1
@@ -164,8 +173,7 @@ class OkCoin:
         elif self._symbol == 'eth_cny':
             unit = 0.01
             rnd = 2
-        total = float(self._funds['asset']['total'])
-        free_money = float(self._funds['free']['cny']) 
+
         purchase = total / 5
         amount = 0
         if free_money >= purchase:
@@ -214,6 +222,6 @@ class OkCoin:
         else:
             return 0
 
-    def _print_trade(self, direction, price, amount, ticker):
-        date = datetime.fromtimestamp(int(ticker['date']))
+    def _print_trade(self, direction, price, amount):
+        date = datetime.fromtimestamp(int(self._ticker['date']))
         print('at %(datetime)s: %(direction)s price:%(price)s amount:%(amount)s' %{'datetime': date, 'direction':direction, 'price': price, 'amount':amount})
