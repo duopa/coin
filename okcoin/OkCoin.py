@@ -99,11 +99,9 @@ class OkCoin:
         print('------OkCoin:long------')
         self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
-        '''
         holding = float(self._funds['free'][self._symbol[0:3]])
         if holding > 0.01:
             return
-        '''
         amount = self._amount_to_long(price)
         self._print_trade('long', price, amount)
         if amount <= 0:
