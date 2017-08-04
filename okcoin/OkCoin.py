@@ -13,7 +13,7 @@ from .key import *
 from .config import *
 from strategy import *
 from okcoin.OkcoinSpotAPI import OKCoinSpot
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class OkCoin:
     '''
@@ -34,6 +34,8 @@ class OkCoin:
         self._ticker = {}
         self._last_long_order_id = 0
         self._last_short_order_id = 0
+        #最后一次交易时间
+        self._last_trade_time = datetime.now() - timedelta(days = 1)
 
     #
     def run(self):
@@ -56,9 +58,10 @@ class OkCoin:
         try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('======>>>process %(symbol)s start at %(now)s ...' %{'symbol': self._symbol, 'now':now})
-            with self._mutex:  # make sure only one thread is modifying counter at a given time
-            #okcoinSpot = OKCoinSpot(okcoinRESTURL,apikey,secretkey)
-            #macd data
+            with self._mutex:  # make sure only one thread is modifying counter at a given time                
+                if self._has_traded_in_near_periods_already():
+                    return
+
                 kline = self._okcoinSpot.kline(self._symbol, self._type, 130, '')
                 self._ticker = self._okcoinSpot.ticker(self._symbol)
                 long_price = float(self._ticker['ticker']['buy'])
@@ -85,8 +88,10 @@ class OkCoin:
             tb = traceback.format_exc()
             print(tb)
 
-    # trade后更新本地funds缓存
     def _update_user_info(self):
+        '''
+        : trade后更新本地funds缓存
+        '''
         print('------OkCoin:update_user_info------')
         userinfo = json.loads(self._okcoinSpot.userinfo())
         print(userinfo)
@@ -99,9 +104,11 @@ class OkCoin:
         print('------OkCoin:long------')
         self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
+        '''
         holding = float(self._funds['free'][self._symbol[0:3]])
         if holding > 0.01:
             return
+        '''
         amount = self._amount_to_long(price)
         self._print_trade('long', price, amount)
         if amount <= 0:
@@ -109,6 +116,7 @@ class OkCoin:
         trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'buy', price, amount))
         if trade_result['result']:
             self._last_long_order_id = trade_result['order_id']
+            self._last_trade_time = datetime.now()
             print('\tlong order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
         else:
             print('\t%(result)s' %{'result': trade_result})
@@ -124,6 +132,7 @@ class OkCoin:
         trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'sell', price, afs))
         if trade_result['result']:
             self._last_short_order_id = trade_result['order_id']
+            self._last_trade_time = datetime.now()
             print('\tshort order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
         else:
             print('\tshort order placed failed')
@@ -150,7 +159,7 @@ class OkCoin:
             return unit
         else:
             return amount
-        
+
     def _amount_to_long(self, price):
         '''
         determine how many coins to buy base on total asset
@@ -158,8 +167,10 @@ class OkCoin:
         total = float(self._funds['asset']['total'])
         free_money = float(self._funds['free']['cny'])
         holding = float(self._funds['free'][self._coin_name])
-        if holding * price >= total * 0.6:
-            print('\t%(coin_name)s poisition too much' %{'coin_name':self._coin_name})
+        #如果某coin占总资金超过30%(可调整),停止买入此coin
+        most_hold_percent = 0.3
+        if holding * price >= total * most_hold_percent:
+            print('\t%(coin_name)s poisition excess %(most_hold_percent)s money' %{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent})
             return 0
 
         if self._symbol == 'ltc_cny':
@@ -220,6 +231,27 @@ class OkCoin:
         else:
             return 0
 
+    def _has_traded_in_near_periods_already(self, periods=3):
+        '''
+        : to avoid trading in n time pieces more than one time
+        : ex: n=3 means never trade again in 3 time pieces
+        '''
+        if self._type == '1min':
+            snds = 60
+        elif self._type == '3min':
+            snds = 180
+        elif self._type == '5min':
+            snds = 300
+        else:
+            snds = 180
+
+        snds *= periods
+        time_piece_start = datetime.now() - timedelta(seconds=snds)
+        if self._last_trade_time >= time_piece_start:
+            return True
+        else:
+            return False
+    
     def _print_trade(self, direction, price, amount):
         date = datetime.fromtimestamp(int(self._ticker['date']))
         print('at %(datetime)s: %(direction)s price:%(price)s amount:%(amount)s' %{'datetime': date, 'direction':direction, 'price': price, 'amount':amount})
