@@ -10,11 +10,11 @@ class MacdStrategy:
         self._stop_loss_count_down = 0
 
     #execute strategy
-    def execute(self, kline, ticker, long_price, avg_long_price):
+    def execute(self, kline, last, long_price, avg_long_price, holding):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})                
 
-        if self._should_stop_loss(ticker, avg_long_price):
+        if self._should_stop_loss(last, avg_long_price, holding, loss_percent=0.02):
             return 'sl'
         elif self._long_signal(kline, long_price):
             return 'l'
@@ -61,8 +61,9 @@ class MacdStrategy:
         and (isdifabovedeabacknperiods or ishighesthist or ispredifdeafarenough)
 
     ### top loss signal
-    def _should_stop_loss(self, ticker, avg_long_price, loss_percent=0.02):
-        last = float(ticker['ticker']['last'])
+    def _should_stop_loss(self, last, avg_long_price, holding, loss_percent=0.02):
+        if holding < 0.01:
+            return False        
         if last <= (avg_long_price * (1- loss_percent)):
             self._stop_loss_count_down = 2
             return True

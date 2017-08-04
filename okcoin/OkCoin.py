@@ -43,11 +43,11 @@ class OkCoin:
         '''
         try:
             self._update_user_info()
-            while not self.stopped:
-                time.sleep(self._frequency)
+            while not self.stopped:                
                 t = threading.Thread(target=self.process)
                 t.setDaemon(True)  # so we don't need to track/join threads
                 t.start()  # start the thread, this is non-blocking
+                time.sleep(self._frequency)
         except:
             tb = traceback.format_exc()
             print(tb)
@@ -63,9 +63,11 @@ class OkCoin:
 
                 kline = self._okcoinSpot.kline(self._symbol, self._type, 130, '')
                 self._ticker = self._okcoinSpot.ticker(self._symbol)
+                last = float(self._ticker['ticker']['last'])
                 long_price = float(self._ticker['ticker']['buy'])
                 avg_long_price = self._get_last_n_long_avg_price(2, 6)
-                signal = self._macd_strategy.execute(kline, self._ticker, long_price, avg_long_price)
+                holding = float(self._funds['free'][self._coin_name])
+                signal = self._macd_strategy.execute(kline, last, long_price, avg_long_price, holding)
 
                 if signal == 'sl':
                     print('\tstop loss')
@@ -80,7 +82,7 @@ class OkCoin:
                     #上涨0.8%,两倍的交易成本
                     if self._is_reasonalbe_short_price(price, avg_long_price, 1.01):
                         self._short(price)
-                        print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})
+                        print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})                
                 print('---------------------------------------------------')
                 print('')
         except:
