@@ -6,14 +6,14 @@ from datetime import datetime
 
 class MacdStrategy:
     def __init__(self):
-        #self.__kline = kline
-        pass
+        #self.__kline = kline        
+        self._stop_loss_count_down = 0
 
     #execute strategy
     def execute(self, kline, ticker, long_price, avg_long_price):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})                
-        
+
         if self._should_stop_loss(ticker, avg_long_price):
             return 'sl'
         elif self._long_signal(kline, long_price):
@@ -28,6 +28,11 @@ class MacdStrategy:
 
     ### long signal
     def _long_signal(self, kline, long_price):
+        #if stop loss happend beofre, skip some long times
+        if self._stop_loss_count_down > 0:
+            self._stop_loss_count_down -= 1
+            return False
+
         #dif, dea, diff - dea?
         macd, macdsignal, macdhist = self._get_macd(kline)
         return (macd[-1] < 0) and (macdsignal[-1] < 0) \
@@ -59,6 +64,7 @@ class MacdStrategy:
     def _should_stop_loss(self, ticker, avg_long_price, loss_percent=0.02):
         last = float(ticker['ticker']['last'])
         if last <= (avg_long_price * (1- loss_percent)):
+            self._stop_loss_count_down = 2
             return True
         return False
 

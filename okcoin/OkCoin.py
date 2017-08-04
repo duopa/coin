@@ -34,7 +34,6 @@ class OkCoin:
         self._ticker = {}
         self._last_long_order_id = 0
         self._last_short_order_id = 0
-        #最后一次交易时间
         self._last_trade_time = datetime.now() - timedelta(days = 1)
 
     #
