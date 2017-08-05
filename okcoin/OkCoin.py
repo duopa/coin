@@ -247,12 +247,14 @@ class OkCoin:
             return True
         else:
             return False
-    
+
     def _print_trade(self, direction, price, amount):
         date = datetime.fromtimestamp(int(self._ticker['date']))
         print('at %(datetime)s: %(direction)s price:%(price)s amount:%(amount)s' %{'datetime': date, 'direction':direction, 'price': price, 'amount':amount})
 
     def _trade_config(self):
+        lowest_unit = 0.01
+        rnd = 1
         if self._symbol == 'ltc_cny':
             lowest_unit = 0.1
             rnd = 1
@@ -260,5 +262,6 @@ class OkCoin:
             lowest_unit = 0.01
             rnd = 2
         elif self._symbol == 'eth_cny':
+            lowest_unit = 0.01
             rnd = 2
         return lowest_unit, rnd
