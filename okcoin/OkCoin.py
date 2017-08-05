@@ -58,7 +58,7 @@ class OkCoin:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('======>>>process %(symbol)s start at %(now)s ...' %{'symbol': self._symbol, 'now':now})
             with self._mutex:  # make sure only one thread is modifying counter at a given time                
-                if self._has_traded_in_near_periods_already():
+                if self._has_traded_in_near_periods_already(9):
                     return
 
                 kline = self._okcoinSpot.kline(self._symbol, self._type, 130, '')
@@ -73,14 +73,14 @@ class OkCoin:
                     print('\tstop loss')
                     #低于当前卖价卖出
                     price = float(self._ticker['ticker']['sell']) - 0.01
-                    self._short(price)
+                    self._stop_loss(price)
                 elif signal == 'l':
                     self._long(long_price)
                 elif signal == 's':
                     #低于当前卖价卖出
                     price = float(self._ticker['ticker']['sell']) - 0.01
                     #上涨0.8%,两倍的交易成本
-                    if self._is_reasonalbe_short_price(price, avg_long_price, 1.01):
+                    if self._is_reasonalbe_short_price(price, avg_long_price, 1.015):
                         self._short(price)
                         print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})                
                 print('---------------------------------------------------')
@@ -122,15 +122,24 @@ class OkCoin:
         else:
             print('\t%(result)s' %{'result': trade_result})
 
+    def _stop_loss(self, price):
+        print('------OkCoin:stop loss------')
+        self._update_user_info()
+        amount = self._amount_to_short(True)
+        self._do_short(price, amount)
+
     def _short(self, price):
         print('------OkCoin:short------')
         self._update_user_info()
-        #available for sale
-        afs = float(self._funds['free'][self._symbol[0:3]])
-        self._print_trade('short', price, afs)
-        if afs <= 0:
+        amount = self._amount_to_short()
+        self._do_short(price, amount)
+
+    def _do_short(self, price, amount):
+        self._print_trade('short', price, amount)
+        if amount <= 0:
+            print('\tno engough coin for sale')
             return
-        trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'sell', price, afs))
+        trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'sell', price, amount))
         if trade_result['result']:
             self._last_short_order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
@@ -139,27 +148,22 @@ class OkCoin:
             print('\tshort order placed failed')
             print('\t%(result)s' %{'result': trade_result})
 
-    def _amount_to_buy(self, price, free_money):        
-        if self._symbol == 'ltc_cny':
-            unit = 0.1
-            rnd = 1
-        elif self._symbol == 'btc_cny':
-            unit = 0.01
-            rnd = 2
-        elif self._symbol == 'eth_cny':
-            unit = 0.01
-            rnd = 2
-
-        amount = free_money / price
-        if amount < unit:
+    def _amount_to_short(self, stop_loss = False):
+        lowest_unit, rnd = self._trade_config()
+        #available for sale
+        afs = float(self._funds['free'][self._symbol[0:3]])
+        if afs < lowest_unit:            
             return 0
 
-        #买入1/5
-        amount = round(amount / 5, rnd)
-        if amount < unit:
-            return unit
+        #if stop loss, just short all coins
+        if stop_loss:
+            return round(afs, rnd)
         else:
-            return amount
+            #short 70% of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
+            amount = afs * 0.7
+            if amount < lowest_unit:
+                amount = afs
+            return round(amount, rnd)
 
     def _amount_to_long(self, price):
         '''
@@ -168,22 +172,13 @@ class OkCoin:
         total = float(self._funds['asset']['total'])
         free_money = float(self._funds['free']['cny'])
         holding = float(self._funds['free'][self._coin_name])
-        #如果某coin占总资金超过30%(可调整),停止买入此coin
-        most_hold_percent = 0.3
+        #如果某coin占总资金超过20%(可调整),停止买入此coin
+        most_hold_percent = 0.2
         if holding * price >= total * most_hold_percent:
-            print('\t%(coin_name)s poisition excess %(most_hold_percent)s money' %{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent})
+            print('\t%(coin_name)s poisition excess %(most_hold_percent)s%% money' %{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent * 100})
             return 0
 
-        if self._symbol == 'ltc_cny':
-            unit = 0.1
-            rnd = 1
-        elif self._symbol == 'btc_cny':
-            unit = 0.01
-            rnd = 2
-        elif self._symbol == 'eth_cny':
-            unit = 0.01
-            rnd = 2
-
+        lowest_unit, rnd = self._trade_config()
         purchase = total / 5
         amount = 0
         if free_money >= purchase:
@@ -191,13 +186,13 @@ class OkCoin:
         else:
             amount = round(free_money / price, rnd)
 
-        if amount < unit:
-            return unit
-        else:
-            return amount
+        if amount < lowest_unit:
+            amount = 0
+
+        return amount
 
     #有一个合理的涨幅才卖,只是能cover交易费用0.4%
-    def _is_reasonalbe_short_price(self, short_price, avg_long_price, multi=1.01):
+    def _is_reasonalbe_short_price(self, short_price, avg_long_price, multi=1.02):
         if short_price <= avg_long_price:
             return False
 
@@ -256,3 +251,14 @@ class OkCoin:
     def _print_trade(self, direction, price, amount):
         date = datetime.fromtimestamp(int(self._ticker['date']))
         print('at %(datetime)s: %(direction)s price:%(price)s amount:%(amount)s' %{'datetime': date, 'direction':direction, 'price': price, 'amount':amount})
+
+    def _trade_config(self):
+        if self._symbol == 'ltc_cny':
+            lowest_unit = 0.1
+            rnd = 1
+        elif self._symbol == 'btc_cny':
+            lowest_unit = 0.01
+            rnd = 2
+        elif self._symbol == 'eth_cny':
+            rnd = 2
+        return lowest_unit, rnd

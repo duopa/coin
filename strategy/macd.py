@@ -38,7 +38,7 @@ class MacdStrategy:
         return (macd[-1] < 0) and (macdsignal[-1] < 0) \
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
-        and self._is_long_price_under_highest_price_percent(kline, long_price) \
+        and self._is_long_price_under_highest_price_percent(kline, long_price, 0.02) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
     #### short signal
