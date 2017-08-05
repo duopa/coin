@@ -80,7 +80,7 @@ class OkCoin:
                 last = float(self._ticker['ticker']['last'])
                 long_price = float(self._ticker['ticker']['buy'])
                 short_price = float(self._ticker['ticker']['sell']) - 0.01
-                avg_long_price = self._get_last_n_long_avg_price(2, 6)
+                avg_long_price = self._get_last_n_long_avg_price(2, 10)
                 holding = float(self._funds['free'][self._coin_name])
 
                 kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
@@ -205,8 +205,12 @@ class OkCoin:
 
         return amount
 
-    ### 获得前n次买入的平均价格
+    #------------------------------------------------------------------------------------------------
     def _get_last_n_long_avg_price(self, nlong, historycount):
+        '''
+        : 获得前n次买入的平均价格
+        : 20170805: add weight, the last buy weight 0.8, the rest share 0.2
+        '''
         orderhistory = json.loads(self._okcoin_spot.orderHistory(self._symbol, '1', '1', historycount))
         if orderhistory['result']:
             orders = orderhistory['orders']
@@ -225,7 +229,16 @@ class OkCoin:
                 long_price_his.append(order['avg_price'])
                 size = len(long_price_his)
             if size > 0:
-                return numpy.mean(long_price_his)
+                # weighted
+                weighted_avg = 0
+                other_weight = 0.2 / (size -1) if size > 1 else 0.2
+                for i in range(0, size):
+                    if i == 0:
+                        weighted_avg += 0.8 * long_price_his[i]
+                    else:
+                        weighted_avg += other_weight * long_price_his[i]
+                return round(weighted_avg, 4)
+                #return numpy.mean(long_price_his)
             else:
                 return 0
         else:
