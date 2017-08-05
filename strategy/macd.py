@@ -217,16 +217,17 @@ class MacdStrategy:
         else:
             return False
 
-    ###
-    def _is_long_price_under_highest_price_percent(self, kline, long_price, percent=0.05):
+    def _is_long_price_under_highest_price_percent(self, kline, long_price, percent=0.01):
         '''
-        只有买入价在最高价以下 percent%时才买入，防止持续下跌的第一次反弹就买入，此时买在半山腰
+        : avoid long at first time price down from latest top price
+        : 2017-08-05 enhance: take latest 60 kline instead of all
         '''
-        #当long_price >= highest_price时,认为是在创新高,买入
-        highest_price, highest_index = self._get_highest_price_from_kline(kline)
+        latest_kline = kline[-60:]
+        highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
         #只有highest_price足够近时,才认为时下跌中继
-        if len(kline) - highest_index >=26:
+        if len(latest_kline) - highest_index >= 26:
             highest_price = 1000000
+        #当long_price >= highest_price时,认为是在创新高,买入
         if long_price >= highest_price:
             return True
         else:
@@ -261,5 +262,8 @@ class MacdStrategy:
 
     ###
     def _get_highest_price_from_kline(self, kline):
-        high_arr = list(map(lambda x: x[2], kline))
+        '''
+        : 2017-08-05: change from highest to close
+        '''
+        high_arr = list(map(lambda x: x[4], kline))
         return max(high_arr), numpy.argmax(high_arr)
