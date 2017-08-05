@@ -173,8 +173,8 @@ class OkCoin:
         if stop_loss:
             return round(afs, rnd)
         else:
-            #short 70% of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
-            amount = afs * 0.7
+            #short 60% of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
+            amount = afs * 0.6
             if amount < lowest_unit:
                 amount = afs
             return round(amount, rnd)
@@ -204,16 +204,6 @@ class OkCoin:
             amount = 0
 
         return amount
-
-    #有一个合理的涨幅才卖,只是能cover交易费用0.4%
-    def _is_reasonalbe_short_price(self, short_price, avg_long_price, multi=1.02):
-        if short_price <= avg_long_price:
-            return False
-
-        if short_price < avg_long_price * multi:
-            return False
-        else:
-            return True
 
     ### 获得前n次买入的平均价格
     def _get_last_n_long_avg_price(self, nlong, historycount):
