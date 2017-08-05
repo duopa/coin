@@ -36,10 +36,10 @@ class MacdStrategy:
         else:
             return ''
     #-----------------------------------------------------------------------------------------------
-    '''
-    : long signal
-    '''
     def _long_signal(self, kline, long_price):
+        '''
+        : long signal
+        '''
         #if stop loss happend beofre, skip some long times
         if self._stop_loss_count_down > 0:
             self._stop_loss_count_down -= 1
@@ -50,7 +50,7 @@ class MacdStrategy:
         return (macd[-1] < 0) and (macdsignal[-1] < 0) \
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
-        and self._is_long_price_under_highest_price_percent(kline, long_price, 0.02) \
+        and self._is_long_price_under_highest_price_percent(kline, long_price, 0.015) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
     #-----------------------------------------------------------------------------------------------
     def _short_signal(self, kline, short_price, avg_long_price):
@@ -183,11 +183,11 @@ class MacdStrategy:
         : masc hist bar 是否在0轴下n个周期
         : 在_is_dea_under_zero_back_n_periods的基础上改进
         '''
-        for i in range(-periods, -1):
+        for i in range(-periods, -2):
             if macdhist[i] > 0:
                 return False
             return True
-    
+
     #-----------------------------------------------------------------------------------------------
     def _is_lowest_hist(self, macdhist):
         '''
