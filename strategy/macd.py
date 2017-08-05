@@ -1,32 +1,44 @@
 """
 """
+from datetime import datetime
 import numpy
 import talib
-from datetime import datetime
 
 class MacdStrategy:
-    def __init__(self):
-        #self.__kline = kline        
+    '''
+    :
+    '''
+    def __init__(self, stop_profit_loss_percents):
+        #self.__kline = kline
         self._stop_loss_count_down = 0
-
-    #execute strategy
-    def execute(self, kline, last, long_price, avg_long_price, holding):
+        self._stop_profit_loss_percents = stop_profit_loss_percents
+    #-----------------------------------------------------------------------------------------------
+    #def execute(self, kline, last, long_price, avg_long_price, holding):
+    def  execute(self, kline, **kwargs):
+        '''
+        : execute strategy
+        '''
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})                
+        print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})
 
-        if self._should_stop_loss(last, avg_long_price, holding, loss_percent=0.02):
+        last = kwargs['last']
+        long_price = kwargs['long_price']
+        short_price = kwargs['short_price']
+        avg_long_price = kwargs['avg_long_price']
+        holding = kwargs['holding']
+
+        if self._should_stop_loss(last, avg_long_price, holding):
             return 'sl'
         elif self._long_signal(kline, long_price):
             return 'l'
-        elif self._short_signal(kline):
+        elif self._short_signal(kline, short_price, avg_long_price):
             return 's'
         else:
             return ''
-        #print(macd)
-        #print(macdsignal)
-        #print(macdhist)
-
-    ### long signal
+    #-----------------------------------------------------------------------------------------------
+    '''
+    : long signal
+    '''
     def _long_signal(self, kline, long_price):
         #if stop loss happend beofre, skip some long times
         if self._stop_loss_count_down > 0:
@@ -40,9 +52,13 @@ class MacdStrategy:
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
         and self._is_long_price_under_highest_price_percent(kline, long_price, 0.02) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
-
-    #### short signal
-    def _short_signal(self, kline):
+    #-----------------------------------------------------------------------------------------------
+    def _short_signal(self, kline, short_price, avg_long_price):
+        '''
+        : short signal
+        '''
+        if not self._is_reasonalbe_short_price(short_price, avg_long_price):
+            return False
         #dif, dea, diff - dea?
         macd, macdsignal, macdhist = self._get_macd(kline)
         isslopechangingtonegtive = self._is_slope_changing_to_negtive(macd)
@@ -59,20 +75,23 @@ class MacdStrategy:
         return isslopechangingtonegtive \
         and dif_above_zero_back_n_periods \
         and (isdifabovedeabacknperiods or ishighesthist or ispredifdeafarenough)
-
-    ### top loss signal
-    def _should_stop_loss(self, last, avg_long_price, holding, loss_percent=0.02):
+    #-----------------------------------------------------------------------------------------------
+    def _should_stop_loss(self, last, avg_long_price, holding):
+        '''
+        : stop loss signal
+        '''
+        stop_loss_percent = self._stop_profit_loss_percents[1]
         if holding < 0.01:
-            return False        
-        if last <= (avg_long_price * (1- loss_percent)):
+            return False
+        if last <= (avg_long_price * (1- stop_loss_percent)):
             self._stop_loss_count_down = 2
             return True
         return False
-
-    ### whether slope of dif line head up
+    #-----------------------------------------------------------------------------------------------
     def _is_slope_changing_to_positive(self, linedata):
         '''
-        找一个更好的算法确定方向改变
+        : whether slope of dif line head up
+        : 找一个更好的算法确定方向改变
         '''
         #最低点法判定方向改变向上
         if len(linedata) < 12:
@@ -94,9 +113,11 @@ class MacdStrategy:
         else:
             return False
         '''
-
-    #whether slope of diff line head down
+    #-----------------------------------------------------------------------------------------------
     def _is_slope_changing_to_negtive(self, linedata):
+        '''
+        : whether slope of diff line heading down
+        '''
         #最高点法判定方向改变向下
         if len(linedata) < 12:
             return False
@@ -118,9 +139,11 @@ class MacdStrategy:
         else:
             return False
         '''
-
-    # why 14
+    #-----------------------------------------------------------------------------------------------
     def _is_dif_under_dea_back_n_periods(self, dif, dea, periods=14):
+        '''
+        : why 14
+        '''
         for i in range(-periods, -1):
             if dif[i] > dea[i]:
                 return False
@@ -130,9 +153,11 @@ class MacdStrategy:
         dea_avg = numpy.average(dea[-periods:])
         return True if dif_avg < dea_avg else False
         '''
-
-    # periods = 7, 卖出条件相对12更宽松
+    #-----------------------------------------------------------------------------------------------
     def _is_dif_above_dea_back_n_periods(self, dif, dea, periods=7):
+        '''
+        : periods = 7, 卖出条件相对12更宽松
+        '''
         for i in range(-periods, -1):
             if dif[i] < dea[i]:
                 return False
@@ -142,42 +167,54 @@ class MacdStrategy:
         dea_avg = numpy.average(dea[-periods:])
         return True if dif_avg > dea_avg else False
         '''
-
-    # dea是否在0轴下n个周期，加入这个条件使得买入更苛刻
-    def _is_dea_under_zero_back_n_periods(self, dea, periods = 8):
+    #-----------------------------------------------------------------------------------------------
+    def _is_dea_under_zero_back_n_periods(self, dea, periods=8):
+        '''
+        : dea是否在0轴下n个周期，加入这个条件使得买入更苛刻
+        '''
         for i in range(-periods, -1):
             if dea[i] > 0:
                 return False
         return True
 
-    # masc hist bar 是否在0轴下n个周期
-    def _is_hist_under_zero_back_n_periods(self, macdhist, periods = 8):
+    #-----------------------------------------------------------------------------------------------
+    def _is_hist_under_zero_back_n_periods(self, macdhist, periods=8):
         '''
-        在_is_dea_under_zero_back_n_periods的基础上改进
+        : masc hist bar 是否在0轴下n个周期
+        : 在_is_dea_under_zero_back_n_periods的基础上改进
         '''
         for i in range(-periods, -1):
             if macdhist[i] > 0:
                 return False
             return True
-
-    # 判断当前柱是否最低
+    
+    #-----------------------------------------------------------------------------------------------
     def _is_lowest_hist(self, macdhist):
+        '''
+        : 判断当前柱是否最低
+        '''
         index = numpy.argmin(macdhist)
         if index == -1 or index == -2:
             return True
         else:
             return False
 
-    # 判断当前柱是否最高
+    #-----------------------------------------------------------------------------------------------
     def _is_highest_hist(self, macdhist):
+        '''
+        : 判断当前柱是否最高
+        '''
         index = numpy.argmax(macdhist)
         if index == -1 or index == -2:
             return True
         else:
             return False
 
-    # 判断dif和dea的距离,距离越大表示信号越强
+    #-----------------------------------------------------------------------------------------------
     def _is_pre_dif_dea_far_enough(self, dif, dea, distance=0.3):
+        '''
+        : 判断dif和dea的距离,距离越大表示信号越强
+        '''
         max_v = abs(dif[-2])
         min_v = abs(dea[-2])
         #swap
@@ -191,15 +228,15 @@ class MacdStrategy:
             return True
         return False
 
-    # golden cross
+    #-----------------------------------------------------------------------------------------------
     def _is_golden_cross(self, dif, dea):
-        return True if (dif[-1] > dea [-1]) and (dif[-3] < dea[-3]) else False
+        return True if(dif[-1] > dea[-1]) and (dif[-3] < dea[-3]) else False
 
-    # dead cross
+    #-----------------------------------------------------------------------------------------------
     def _is_dead_cross(self, dif, dea):
         return True if (dif[-1] < dea[-1]) and (dif[-3] > dea[-3]) else False
 
-    ###
+    #-----------------------------------------------------------------------------------------------
     def _is_dif_negtive_when_hist_changeing_to_negtive(self, dif, hist):
         '''
         用于买入前判断当最近一次hist又0轴上变成0轴下时,diff是否已经在0轴下, 如果在则返回true
@@ -216,7 +253,7 @@ class MacdStrategy:
             return True
         else:
             return False
-
+    #-----------------------------------------------------------------------------------------------
     def _is_long_price_under_highest_price_percent(self, kline, long_price, percent=0.01):
         '''
         : avoid long at first time price down from latest top price
@@ -236,7 +273,7 @@ class MacdStrategy:
                 return True
             else:
                 return False
-
+    #-----------------------------------------------------------------------------------------------
     def _is_dif_above_zero_back_n_periods(self, dif, periods=6):
         '''
         short:
@@ -246,7 +283,19 @@ class MacdStrategy:
             return True
         else:
             return False
-    ###--------------------------------helper-------------------------------
+    #----------------------------------------------------------------------------------------------
+    def _is_reasonalbe_short_price(self, short_price, avg_long_price):
+        '''
+        : 有一个合理的涨幅才卖, 至少能cover交易费用0.4%
+        '''
+        if short_price <= avg_long_price:
+            return False
+        stop_profit_percent = self._stop_profit_loss_percents[0]
+        if short_price < avg_long_price * (1 + stop_profit_percent):
+            return False
+        else:
+            return True
+    #--------------------------------helper-------------------------------------------------------------
     def _get_macd(self, kline):
         close_list = self._get_close_from_kline(kline)
         close = numpy.array(close_list)

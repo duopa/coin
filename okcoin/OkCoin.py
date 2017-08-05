@@ -19,13 +19,16 @@ class OkCoin:
     '''
     OkCoin
     '''
-    def __init__(self, symbol, time_type, frequency):
+    def __init__(self, symbol, time_type, frequency, stop_profit_loss_percents = None):
+        '''
+        : symbol: btc_cny, ltc_cny, eth_cny
+        : time_type: 1min, 3min, 5min...
+        : frequency: seconds that execute strategy
+        : stop_profit_loss_percents: [0]: stop_profit_percent, [1]: stop_loss_percent
+        '''
         self._apikey = api_key
         self._secretkey = secret_key
-        self.stopped = False
-        self._mutex = threading.Lock()
-        self._okcoinSpot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
-        self._macd_strategy = MacdStrategy()
+        self._stopped = False        
         self._symbol = symbol
         self._coin_name = symbol[0:3]
         self._type = time_type
@@ -34,7 +37,11 @@ class OkCoin:
         self._ticker = {}
         self._last_long_order_id = 0
         self._last_short_order_id = 0
-        self._last_trade_time = datetime.now() - timedelta(days = 1)
+        self._stop_profit_loss_percents = stop_profit_loss_percents
+        self._last_trade_time = datetime.now() - timedelta(days=1)
+        self._mutex = threading.Lock()
+        self._macd_strategy = MacdStrategy(stop_profit_loss_percents)
+        self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
 
     #
     def run(self):
@@ -42,11 +49,18 @@ class OkCoin:
         https://stackoverflow.com/questions/44768688/python-how-to-do-a-periodic-non-blocking-lo
         '''
         try:
+            if not len(self._stop_profit_loss_percents) == 2:
+                print('ERROR:_stop_profit_loss_percents should have 2 values')
+                return
+
+            print('\tstop_profit_percent:%(stop_profit_percent)s, stop_loss_percent:%(stop_loss_percent)s' \
+            %{'stop_profit_percent':self._stop_profit_loss_percents[0], 'stop_loss_percent': self._stop_profit_loss_percents[1]})
+
             self._update_user_info()
-            while not self.stopped:                
-                t = threading.Thread(target=self.process)
-                t.setDaemon(True)  # so we don't need to track/join threads
-                t.start()  # start the thread, this is non-blocking
+            while not self._stopped:
+                thread = threading.Thread(target=self.process)
+                thread.setDaemon(True)  # so we don't need to track/join threads
+                thread.start()  # start the thread, this is non-blocking
                 time.sleep(self._frequency)
         except:
             tb = traceback.format_exc()
@@ -61,13 +75,17 @@ class OkCoin:
                 if self._has_traded_in_near_periods_already(9):
                     return
 
-                kline = self._okcoinSpot.kline(self._symbol, self._type, 130, '')
-                self._ticker = self._okcoinSpot.ticker(self._symbol)
+                kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
+                self._ticker = self._okcoin_spot.ticker(self._symbol)
                 last = float(self._ticker['ticker']['last'])
                 long_price = float(self._ticker['ticker']['buy'])
+                short_price = float(self._ticker['ticker']['sell']) - 0.01
                 avg_long_price = self._get_last_n_long_avg_price(2, 6)
                 holding = float(self._funds['free'][self._coin_name])
-                signal = self._macd_strategy.execute(kline, last, long_price, avg_long_price, holding)
+
+                kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
+                signal = self._macd_strategy.execute(kline, **kwargs)
+                #signal = self._macd_strategy.execute(kline, last, long_price, avg_long_price, holding)
 
                 if signal == 'sl':
                     print('\tstop loss')
@@ -77,12 +95,8 @@ class OkCoin:
                 elif signal == 'l':
                     self._long(long_price)
                 elif signal == 's':
-                    #低于当前卖价卖出
-                    price = float(self._ticker['ticker']['sell']) - 0.01
-                    #上涨0.8%,两倍的交易成本
-                    if self._is_reasonalbe_short_price(price, avg_long_price, 1.015):
-                        self._short(price)
-                        print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})                
+                    self._short(short_price)
+                    print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})                
                 print('---------------------------------------------------')
                 print('')
         except:
@@ -94,7 +108,7 @@ class OkCoin:
         : trade后更新本地funds缓存
         '''
         print('------OkCoin:update_user_info------')
-        userinfo = json.loads(self._okcoinSpot.userinfo())
+        userinfo = json.loads(self._okcoin_spot.userinfo())
         print(userinfo)
         if userinfo['result']:
             self._funds = userinfo['info']['funds']
@@ -114,7 +128,7 @@ class OkCoin:
         self._print_trade('long', price, amount)
         if amount <= 0:
             return
-        trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'buy', price, amount))
+        trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'buy', price, amount))
         if trade_result['result']:
             self._last_long_order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
@@ -139,7 +153,7 @@ class OkCoin:
         if amount <= 0:
             print('\tno engough coin for sale')
             return
-        trade_result = json.loads(self._okcoinSpot.trade(self._symbol, 'sell', price, amount))
+        trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'sell', price, amount))
         if trade_result['result']:
             self._last_short_order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
@@ -203,7 +217,7 @@ class OkCoin:
 
     ### 获得前n次买入的平均价格
     def _get_last_n_long_avg_price(self, nlong, historycount):
-        orderhistory = json.loads(self._okcoinSpot.orderHistory(self._symbol, '1', '1', historycount))
+        orderhistory = json.loads(self._okcoin_spot.orderHistory(self._symbol, '1', '1', historycount))
         if orderhistory['result']:
             orders = orderhistory['orders']
             long_price_his = []
