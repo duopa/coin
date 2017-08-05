@@ -96,7 +96,7 @@ class OkCoin:
                     self._long(long_price)
                 elif signal == 's':
                     self._short(short_price)
-                    print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':price, 'avgprice':avg_long_price})                
+                    print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})                
                 print('---------------------------------------------------')
                 print('')
         except:
