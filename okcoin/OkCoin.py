@@ -71,10 +71,7 @@ class OkCoin:
         try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('======>>>process %(symbol)s start at %(now)s ...' %{'symbol': self._symbol, 'now':now})
-            with self._mutex:  # make sure only one thread is modifying counter at a given time                
-                if self._has_traded_in_near_periods_already(9):
-                    return
-
+            with self._mutex:  # make sure only one thread is modifying counter at a given time
                 kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
                 self._ticker = self._okcoin_spot.ticker(self._symbol)
                 last = float(self._ticker['ticker']['last'])
@@ -85,14 +82,18 @@ class OkCoin:
 
                 kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
                 signal = self._macd_strategy.execute(kline, **kwargs)
-                #signal = self._macd_strategy.execute(kline, last, long_price, avg_long_price, holding)
 
+                # stop loss first priority
                 if signal == 'sl':
                     print('\tstop loss')
                     #低于当前卖价卖出
                     price = float(self._ticker['ticker']['sell']) - 0.01
                     self._stop_loss(price)
-                elif signal == 'l':
+
+                if self._has_traded_in_near_periods_already(9):
+                    return
+
+                if signal == 'l':
                     self._long(long_price)
                 elif signal == 's':
                     self._short(short_price)
@@ -171,13 +172,13 @@ class OkCoin:
 
         #if stop loss, just short all coins
         if stop_loss:
-            return round(afs, rnd)
+            return afs
         else:
             #short 60% of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
             amount = afs * 0.6
             if amount < lowest_unit:
                 amount = afs
-            return round(amount, rnd)
+            return amount
 
     def _amount_to_long(self, price):
         '''

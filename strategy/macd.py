@@ -257,22 +257,24 @@ class MacdStrategy:
     def _is_long_price_under_highest_price_percent(self, kline, long_price, percent=0.01):
         '''
         : avoid long at first time price down from latest top price
-        : 2017-08-05 enhance: take latest 60 kline instead of all
         '''
-        latest_kline = kline[-60:]
+        latest_kline = kline #kline[-60:]
         highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
-        #只有highest_price足够近时,才认为时下跌中继
-        if len(latest_kline) - highest_index >= 26:
-            highest_price = 1000000
-        #当long_price >= highest_price时,认为是在创新高,买入
-        if long_price >= highest_price:
-            return True
-        else:
-            diff = highest_price * (1-percent)
-            if long_price <= diff:
+        #if highest price far enough, 
+        if len(latest_kline) - highest_index >= 47:#47 = 26 + 12 + 9
+            #当long_price >= highest_price时,认为是在创新高,买入
+            if long_price >= highest_price:
                 return True
             else:
-                return False
+                diff = highest_price * (1-percent)
+                if long_price <= diff:
+                    return True
+                else:
+                    return False
+        else:
+            #if too close to hightest price, do NOT long
+            return False
+        
     #-----------------------------------------------------------------------------------------------
     def _is_dif_above_zero_back_n_periods(self, dif, periods=6):
         '''
