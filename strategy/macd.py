@@ -39,20 +39,26 @@ class MacdStrategy:
     def _long_signal(self, kline, long_price):
         '''
         : long signal
-        '''
-        #if stop loss happend beofre, skip some long times
-        if self._stop_loss_count_down > 0:
-            print('\tstop loss cound down: %(slcd)s' %{'slcd': self._stop_loss_count_down})
-            self._stop_loss_count_down -= 1
-            return False
-
+        '''    
         #dif, dea, diff - dea?
         macd, macdsignal, macdhist = self._get_macd(kline)
-        return (macd[-1] < 0) and (macdsignal[-1] < 0) \
+        result = (macd[-1] < 0) and (macdsignal[-1] < 0) \
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
+        and not self._is_hist_close_to_zero_for_n_periods(macdhist) \
         and self._is_long_price_under_highest_price_percent(kline, long_price, 0.015) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
+
+        if result:
+            #if stop loss happend beofre, skip some long times
+            if self._stop_loss_count_down > 0:
+                print('\tstop loss cound down: %(slcd)s' %{'slcd': self._stop_loss_count_down})
+                self._stop_loss_count_down -= 1
+                return False
+            else:
+                return True
+        else:
+            return False
     #-----------------------------------------------------------------------------------------------
     def _short_signal(self, kline, short_price, avg_long_price):
         '''
@@ -85,7 +91,7 @@ class MacdStrategy:
         if holding < 0.01:
             return False
         if last <= (avg_long_price * (1- stop_loss_percent)):
-            self._stop_loss_count_down = 1
+            self._stop_loss_count_down = 2
             return True
         return False
     #-----------------------------------------------------------------------------------------------
@@ -298,7 +304,22 @@ class MacdStrategy:
             return False
         else:
             return True
-    #--------------------------------helper-------------------------------------------------------------
+    #----------------------------------------------------------------------------------------------
+    def _is_hist_close_to_zero_for_n_periods(self, hist, periods=9):
+        '''
+        : if avg hist almost close to zero for long time(the hist bar hight is below 15% of highest bar hight), do NOT long
+        '''
+        lowest_hist = abs(min(hist))
+        sum_hist = 0
+        for i in range(-periods, -1):
+            sum_hist += hist[i]
+
+        avg_hist = abs(sum_hist) / periods
+        if avg_hist / lowest_hist < 0.15:
+            return True
+        else:
+            return False
+    #--------------------------------helper-------------------------------------------------------
     def _get_macd(self, kline):
         close_list = self._get_close_from_kline(kline)
         close = numpy.array(close_list)
