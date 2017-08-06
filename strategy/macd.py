@@ -8,10 +8,10 @@ class MacdStrategy:
     '''
     :
     '''
-    def __init__(self, stop_profit_loss_percents):
+    def __init__(self, **kwargs):
         #self.__kline = kline
         self._stop_loss_count_down = 0
-        self._stop_profit_loss_percents = stop_profit_loss_percents
+        self._config = kwargs
     #-----------------------------------------------------------------------------------------------
     #def execute(self, kline, last, long_price, avg_long_price, holding):
     def  execute(self, kline, **kwargs):
@@ -87,10 +87,10 @@ class MacdStrategy:
         '''
         : stop loss signal
         '''
-        stop_loss_percent = self._stop_profit_loss_percents[1]
+        stop_loss_ratio = self._config['stop_loss_ratio']
         if holding < 0.01:
             return False
-        if last <= (avg_long_price * (1- stop_loss_percent)):
+        if last <= (avg_long_price * (1- stop_loss_ratio)):
             self._stop_loss_count_down = 2
             return True
         return False
@@ -268,7 +268,7 @@ class MacdStrategy:
         latest_kline = kline #kline[-60:]
         highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
         #if highest price far enough
-        if len(latest_kline) - highest_index >= 47:#47 = 26 + 12 + 9
+        if len(latest_kline) - highest_index > 47:#47 = 26 + 12 + 9
             #当long_price >= highest_price时,认为是在创新高,买入
             if long_price >= highest_price:
                 return True
@@ -299,8 +299,8 @@ class MacdStrategy:
         '''
         if short_price <= avg_long_price:
             return False
-        stop_profit_percent = self._stop_profit_loss_percents[0]
-        if short_price < avg_long_price * (1 + stop_profit_percent):
+        stop_profit_ratio = self._config['stop_profit_ratio']
+        if short_price < avg_long_price * (1 + stop_profit_ratio):
             return False
         else:
             return True

@@ -19,12 +19,11 @@ class OkCoin:
     '''
     OkCoin
     '''
-    def __init__(self, symbol, time_type, frequency, stop_profit_loss_percents = None):
+    def __init__(self, symbol, time_type, frequency):
         '''
         : symbol: btc_cny, ltc_cny, eth_cny
         : time_type: 1min, 3min, 5min...
         : frequency: seconds that execute strategy
-        : stop_profit_loss_percents: [0]: stop_profit_percent, [1]: stop_loss_percent
         '''
         self._apikey = api_key
         self._secretkey = secret_key
@@ -37,25 +36,30 @@ class OkCoin:
         self._ticker = {}
         self._last_long_order_id = 0
         self._last_short_order_id = 0
-        self._stop_profit_loss_percents = stop_profit_loss_percents
+        self._config = None
         self._last_trade_time = datetime.now() - timedelta(days=1)
         self._mutex = threading.Lock()
-        self._macd_strategy = MacdStrategy(stop_profit_loss_percents)
+        self._macd_strategy = None
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
 
-    #
+        if self._symbol == '3min':
+            self._config = config_3min
+            self._macd_strategy = MacdStrategy(**config_3min)
+        else:
+            self._config = config_3min
+            self._macd_strategy = MacdStrategy(**config_3min)
+
     def run(self):
         '''
         https://stackoverflow.com/questions/44768688/python-how-to-do-a-periodic-non-blocking-lo
         '''
         try:
-            if not len(self._stop_profit_loss_percents) == 2:
-                print('ERROR:_stop_profit_loss_percents should have 2 values')
-                return
-
-            print('\tstop_profit_percent:%(stop_profit_percent)s, stop_loss_percent:%(stop_loss_percent)s' \
-            %{'stop_profit_percent':self._stop_profit_loss_percents[0], 'stop_loss_percent': self._stop_profit_loss_percents[1]})
-
+            print('---------------CONFIG---------------')
+            print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self._config['stop_profit_ratio']})
+            print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self._config['stop_loss_ratio']})
+            print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self._config['short_ratio']})
+            print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self._config['coin_most_hold_ratio']})
+            print('')
             self._update_user_info()
             while not self._stopped:
                 thread = threading.Thread(target=self.process)
@@ -66,7 +70,6 @@ class OkCoin:
             tb = traceback.format_exc()
             print(tb)
 
-    #
     def process(self):
         try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -163,19 +166,19 @@ class OkCoin:
             print('\tshort order placed failed')
             print('\t%(result)s' %{'result': trade_result})
 
-    def _amount_to_short(self, stop_loss = False):
+    def _amount_to_short(self, stop_loss=False):
         lowest_unit, rnd = self._trade_config()
         #available for sale
         afs = float(self._funds['free'][self._symbol[0:3]])
-        if afs < lowest_unit:            
+        if afs < lowest_unit:
             return 0
 
         #if stop loss, just short all coins
         if stop_loss:
             return afs
         else:
-            #short 60% of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
-            amount = afs * 0.6
+            #short part of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
+            amount = afs * self._config['short_ratio']
             if amount < lowest_unit:
                 amount = afs
             return amount
@@ -188,7 +191,7 @@ class OkCoin:
         free_money = float(self._funds['free']['cny'])
         holding = float(self._funds['free'][self._coin_name])
         #如果某coin占总资金超过20%(可调整),停止买入此coin
-        most_hold_percent = 0.2
+        most_hold_percent = self._config['coin_most_hold_ratio']
         if holding * price >= total * most_hold_percent:
             print('\t%(coin_name)s poisition excess %(most_hold_percent)s%% money' %{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent * 100})
             return 0
@@ -232,11 +235,12 @@ class OkCoin:
             if size > 0:
                 # weighted
                 weighted_avg = 0
-                latest_weith = 0.8 if size > 1 else 1
+                # the latest long price weight
+                latest_weigth = 0.8 if size > 1 else 1
                 other_weight = 0.2 / (size -1) if size > 1 else 0
                 for i in range(0, size):
                     if i == 0:
-                        weighted_avg += 0.8 * long_price_his[i]
+                        weighted_avg += latest_weigth * long_price_his[i]
                     else:
                         weighted_avg += other_weight * long_price_his[i]
                 return round(weighted_avg, 4)
