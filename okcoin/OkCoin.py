@@ -13,7 +13,7 @@ import numpy
 from strategy import MacdStrategy
 from okcoin.OkcoinSpotAPI import OKCoinSpot
 from .key import api_key, secret_key
-from .config import url_cn, config_3min
+from .config import url_cn, config_3min, config_5min
 
 class OkCoin:
     '''
@@ -45,6 +45,9 @@ class OkCoin:
         if self._symbol == '3min':
             self._config = config_3min
             self._macd_strategy = MacdStrategy(**config_3min)
+        elif self._symbol == '5min':
+            self._config = config_5min
+            self._macd_strategy = MacdStrategy(**config_5min)
         else:
             self._config = config_3min
             self._macd_strategy = MacdStrategy(**config_3min)
