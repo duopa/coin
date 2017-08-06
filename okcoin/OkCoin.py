@@ -42,10 +42,10 @@ class OkCoin:
         self._macd_strategy = None
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
 
-        if self._symbol == '3min':
+        if self._type == '3min':
             self._config = config_3min
             self._macd_strategy = MacdStrategy(**config_3min)
-        elif self._symbol == '5min':
+        elif self._type == '5min':
             self._config = config_5min
             self._macd_strategy = MacdStrategy(**config_5min)
         else:
