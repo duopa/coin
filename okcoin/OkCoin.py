@@ -76,7 +76,7 @@ class OkCoin:
                 self._ticker = self._okcoin_spot.ticker(self._symbol)
                 last = float(self._ticker['ticker']['last'])
                 long_price = float(self._ticker['ticker']['buy'])
-                short_price = float(self._ticker['ticker']['sell']) - 0.01
+                short_price = float(self._ticker['ticker']['sell'])
                 avg_long_price = self._get_last_n_long_avg_price(2, 10)
                 holding = float(self._funds['free'][self._coin_name])
 

@@ -42,6 +42,7 @@ class MacdStrategy:
         '''
         #if stop loss happend beofre, skip some long times
         if self._stop_loss_count_down > 0:
+            print('\tstop loss cound down: %(slcd)s' %{'slcd': self._stop_loss_count_down})
             self._stop_loss_count_down -= 1
             return False
 
@@ -84,7 +85,7 @@ class MacdStrategy:
         if holding < 0.01:
             return False
         if last <= (avg_long_price * (1- stop_loss_percent)):
-            self._stop_loss_count_down = 2
+            self._stop_loss_count_down = 1
             return True
         return False
     #-----------------------------------------------------------------------------------------------
@@ -260,7 +261,7 @@ class MacdStrategy:
         '''
         latest_kline = kline #kline[-60:]
         highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
-        #if highest price far enough, 
+        #if highest price far enough
         if len(latest_kline) - highest_index >= 47:#47 = 26 + 12 + 9
             #当long_price >= highest_price时,认为是在创新高,买入
             if long_price >= highest_price:
