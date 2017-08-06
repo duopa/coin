@@ -8,12 +8,12 @@ import threading
 import time
 import json
 import traceback
-import numpy
-from .key import *
-from .config import *
-from strategy import *
-from okcoin.OkcoinSpotAPI import OKCoinSpot
 from datetime import datetime, timedelta
+import numpy
+from strategy import MacdStrategy
+from okcoin.OkcoinSpotAPI import OKCoinSpot
+from .key import api_key, secret_key
+from .config import url_cn, config_3min
 
 class OkCoin:
     '''
@@ -27,7 +27,7 @@ class OkCoin:
         '''
         self._apikey = api_key
         self._secretkey = secret_key
-        self._stopped = False        
+        self._stopped = False
         self._symbol = symbol
         self._coin_name = symbol[0:3]
         self._type = time_type
