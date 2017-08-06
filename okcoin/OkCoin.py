@@ -232,7 +232,8 @@ class OkCoin:
             if size > 0:
                 # weighted
                 weighted_avg = 0
-                other_weight = 0.2 / (size -1) if size > 1 else 0.2
+                latest_weith = 0.8 if size > 1 else 1
+                other_weight = 0.2 / (size -1) if size > 1 else 0
                 for i in range(0, size):
                     if i == 0:
                         weighted_avg += 0.8 * long_price_his[i]
