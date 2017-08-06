@@ -18,8 +18,8 @@ class MacdStrategy:
         '''
         : execute strategy
         '''
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})
+        #now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        #print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})
 
         last = kwargs['last']
         long_price = kwargs['long_price']
