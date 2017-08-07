@@ -74,7 +74,7 @@ class OkCoin:
                 time.sleep(self._frequency)
         except:
             tb = traceback.format_exc()
-            print(tb)
+            self._logger.log(tb)
 
     def process(self):
         try:
@@ -110,7 +110,7 @@ class OkCoin:
                 print('')
         except:
             tb = traceback.format_exc()
-            print(tb)
+            self._logger.log(tb)
 
     def _update_user_info(self):
         '''
