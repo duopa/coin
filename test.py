@@ -1,5 +1,5 @@
 import numpy
-
+from common import Logger
 
 
 ''' test get min and max of array and numpy array
@@ -16,3 +16,6 @@ print(arr.index(min))
 print(arr.index(max))
 print(len(arr) - arr.index(max))
 '''
+
+logger = Logger('c:/logs', 'btc_cny')
+logger.log('test %(test)s' %{'test':'a test log'})

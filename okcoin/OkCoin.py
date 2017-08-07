@@ -14,6 +14,7 @@ from strategy import MacdStrategy
 from okcoin.OkcoinSpotAPI import OKCoinSpot
 from .key import api_key, secret_key
 from .config import url_cn, config_3min, config_5min
+from common import Logger
 
 class OkCoin:
     '''
@@ -41,6 +42,7 @@ class OkCoin:
         self._mutex = threading.Lock()
         self._macd_strategy = None
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
+        self._logger = Logger('c:/logs', symbol)
 
         if self._type == '3min':
             self._config = config_3min
@@ -63,6 +65,7 @@ class OkCoin:
             print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self._config['short_ratio']})
             print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self._config['coin_most_hold_ratio']})
             print('')
+            self._logger.log('---------------start running---------------')
             self._update_user_info()
             while not self._stopped:
                 thread = threading.Thread(target=self.process)
@@ -102,8 +105,8 @@ class OkCoin:
                 if signal == 'l':
                     self._long(long_price)
                 elif signal == 's':
-                    self._short(short_price)
-                    print('\tshort price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})                
+                    self._short(short_price)             
+                    self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})
                 print('---------------------------------------------------')
                 print('')
         except:
@@ -120,10 +123,10 @@ class OkCoin:
         if userinfo['result']:
             self._funds = userinfo['info']['funds']
         else:
-            print('_update_user_info failed<<<---')
+            self._logger.log('ERROR:_update_user_info failed')
 
     def _long(self, price):
-        print('------OkCoin:long------')
+        self._logger.log('------OkCoin:long------')
         self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
         '''
@@ -139,18 +142,19 @@ class OkCoin:
         if trade_result['result']:
             self._last_long_order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
-            print('\tlong order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
+            self._logger.log('long order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
         else:
             print('\t%(result)s' %{'result': trade_result})
 
     def _stop_loss(self, price):
-        print('------OkCoin:stop loss------')
+        self._logger.log('------OkCoin:stop loss------')
         self._update_user_info()
         amount = self._amount_to_short(True)
         self._do_short(price, amount)
 
     def _short(self, price):
         print('------OkCoin:short------')
+        self._logger.log('------OkCoin:short------')
         self._update_user_info()
         amount = self._amount_to_short()
         self._do_short(price, amount)
@@ -164,7 +168,7 @@ class OkCoin:
         if trade_result['result']:
             self._last_short_order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
-            print('\tshort order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
+            self._logger.log('short order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
         else:
             print('\tshort order placed failed')
             print('\t%(result)s' %{'result': trade_result})
