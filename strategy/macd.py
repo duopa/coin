@@ -48,14 +48,12 @@ class MacdStrategy:
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
         and not self._is_hist_close_to_zero_for_n_periods(macdhist) \
-        and self._is_give_up_long_point(kline) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
         if result:
-            #if stop loss happend beofre, skip some long times
-            if self._stop_loss_count_down > 0:
-                print('\tstop loss cound down: %(slcd)s' %{'slcd': self._stop_loss_count_down})
-                self._stop_loss_count_down -= 1
+            is_in_give_up_counting = self._is_in_give_up_long_counting(kline)
+            is_in_stop_loss_counting = self._is_in_stop_loss_counting()
+            if is_in_give_up_counting or is_in_stop_loss_counting:
                 return False
             else:
                 return True
@@ -267,8 +265,8 @@ class MacdStrategy:
         '''
         : avoid long at first time price down from latest top price
         '''
-        #latest_kline = kline
-        latest_kline = kline[-60:]
+        latest_kline = kline
+        #latest_kline = kline[-60:]
         highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
         #if highest price far enough
         if len(latest_kline) - highest_index > 47:#47 = 26 + 12 + 9
@@ -285,18 +283,31 @@ class MacdStrategy:
             #if too close to hightest price, do NOT long
             return False
     #-----------------------------------------------------------------------------------------------
-    def _is_give_up_long_point(self, kline):
+    def _is_in_give_up_long_counting(self, kline):
+        '''
+        : from highest price, give up some times long chance, to skip price dropping relay
+        '''
         latest_kline = kline[-60:]
         highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
         if self._pre_highest_price != highest_price:
             self._pre_highest_price = highest_price
             self._give_up_long_count_down = self._config['give_up_long_count_down']
 
-        self._give_up_long_count_down -= 1
         if self._give_up_long_count_down > 0:
-            return False
-        else:
+            print('\tgive up long count down %(gucd)s' %{'gucd': self._give_up_long_count_down})
+            self._give_up_long_count_down -= 1
             return True
+        else:
+            return False
+    #-----------------------------------------------------------------------------------------------
+    def _is_in_stop_loss_counting(self):
+        #if stop loss happend beofre, skip some long times
+        if self._stop_loss_count_down > 0:
+            print('\tstop loss count down: %(slcd)s' %{'slcd': self._stop_loss_count_down})
+            self._stop_loss_count_down -= 1
+            return True
+        else:
+            return False
     #-----------------------------------------------------------------------------------------------
     def _is_dif_above_zero_back_n_periods(self, dif, periods=6):
         '''
