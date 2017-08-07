@@ -93,8 +93,7 @@ class OkCoin:
                 signal = self._macd_strategy.execute(kline, **kwargs)
 
                 # stop loss first priority
-                if signal == 'sl':
-                    print('\tstop loss')
+                if signal == 'sl':                    
                     #低于当前卖价卖出
                     price = float(self._ticker['ticker']['sell']) - 0.01
                     self._stop_loss(price)
@@ -105,7 +104,7 @@ class OkCoin:
                 if signal == 'l':
                     self._long(long_price)
                 elif signal == 's':
-                    self._short(short_price)             
+                    self._short(short_price)
                     self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})
                 print('---------------------------------------------------')
                 print('')
@@ -117,7 +116,7 @@ class OkCoin:
         '''
         : trade后更新本地funds缓存
         '''
-        print('------OkCoin:update_user_info------')
+        print('------OkCoin: update_user_info------')
         userinfo = json.loads(self._okcoin_spot.userinfo())
         print(userinfo)
         if userinfo['result']:
@@ -126,7 +125,7 @@ class OkCoin:
             self._logger.log('ERROR:_update_user_info failed')
 
     def _long(self, price):
-        self._logger.log('------OkCoin:long------')
+        price('------OkCoin: long------')
         self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
         '''
@@ -147,22 +146,22 @@ class OkCoin:
             print('\t%(result)s' %{'result': trade_result})
 
     def _stop_loss(self, price):
-        self._logger.log('------OkCoin:stop loss------')
+        print('------OkCoin: stop loss------')
+        self._logger.log('OkCoin: STOP LOSS')
         self._update_user_info()
         amount = self._amount_to_short(True)
         self._do_short(price, amount)
 
     def _short(self, price):
-        print('------OkCoin:short------')
-        self._logger.log('------OkCoin:short------')
+        print('------OkCoin: short------')
         self._update_user_info()
         amount = self._amount_to_short()
         self._do_short(price, amount)
 
     def _do_short(self, price, amount):
         self._print_trade('short', price, amount)
-        if amount <= 0:
-            print('\tno engough coin for sale')
+        if amount <= 0:            
+            self._logger.log('no engough coin for sale')
             return
         trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'sell', price, amount))
         if trade_result['result']:
@@ -171,7 +170,7 @@ class OkCoin:
             self._logger.log('short order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
         else:
             print('\tshort order placed failed')
-            print('\t%(result)s' %{'result': trade_result})
+            self._logger.log('%(result)s' %{'result': trade_result})
 
     def _amount_to_short(self, stop_loss=False):
         lowest_unit, rnd = self._trade_config()
@@ -200,7 +199,9 @@ class OkCoin:
         #如果某coin占总资金超过20%(可调整),停止买入此coin
         most_hold_percent = self._config['coin_most_hold_ratio']
         if holding * price >= total * most_hold_percent:
-            print('\t%(coin_name)s poisition excess %(most_hold_percent)s%% money' %{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent * 100})
+            msg = '{coin_name} poisition excess {most_hold_percent}% money'.format(**{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent * 100})            
+            print('\t' + msg)
+            self._logger.log(msg)
             return 0
 
         lowest_unit, rnd = self._trade_config()
@@ -280,7 +281,9 @@ class OkCoin:
 
     def _print_trade(self, direction, price, amount):
         date = datetime.fromtimestamp(int(self._ticker['date']))
-        print('at %(datetime)s: %(direction)s price:%(price)s amount:%(amount)s' %{'datetime': date, 'direction':direction, 'price': price, 'amount':amount})
+        msg = 'at {datetime}: {direction} price:%{price} amount:{amount}'.format(**{'datetime': date, 'direction':direction, 'price': price, 'amount':amount})
+        self._logger.log(msg)
+        print('\t' + msg)
 
     def _trade_config(self):
         lowest_unit = 0.01

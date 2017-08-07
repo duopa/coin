@@ -41,19 +41,20 @@ class MacdStrategy:
     def _long_signal(self, kline, long_price):
         '''
         : long signal
-        '''    
+        '''
         #dif, dea, diff - dea?
         macd, macdsignal, macdhist = self._get_macd(kline)
         result = (macd[-1] < 0) and (macdsignal[-1] < 0) \
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
         and not self._is_hist_close_to_zero_for_n_periods(macdhist) \
+        and self._is_long_price_under_highest_price_percent(kline, long_price, 0.015) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
         if result:
-            is_in_give_up_counting = self._is_in_give_up_long_counting(kline)
+            #is_in_give_up_counting = self._is_in_give_up_long_counting(kline)
             is_in_stop_loss_counting = self._is_in_stop_loss_counting()
-            if is_in_give_up_counting or is_in_stop_loss_counting:
+            if is_in_stop_loss_counting:
                 return False
             else:
                 return True
