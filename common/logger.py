@@ -13,7 +13,7 @@ class Logger:
         self._logger = logging.getLogger('root')
         '''
         self._logger = logging.getLogger()
-        self._logger.setLevel(logging.DEBUG)
+        self._logger.setLevel(logging.INFO)
         formatter = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
         handler = logging.handlers.TimedRotatingFileHandler("{0}/{1}.log".format(path, filename), 'midnight', 1, 15)
         handler.setFormatter(formatter)
