@@ -125,7 +125,7 @@ class OkCoin:
             self._logger.log('ERROR:_update_user_info failed')
 
     def _long(self, price):
-        price('------OkCoin: long------')
+        print('------OkCoin: long------')
         self._update_user_info()
         #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
         '''
