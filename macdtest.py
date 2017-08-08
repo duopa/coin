@@ -84,16 +84,16 @@ test_is_pre_dif_dea_far_enough_should_return_false()
 
 #------------------------------------------------------------------------------------------------------------------
 def test_is_long_price_under_highest_price_percent_should_return_false():
-    kline = okcoinSpot.kline('ltc_cny', '3min', 130)
-    result = macd._is_long_price_under_highest_price_percent(kline,313)
+    kline = okcoinSpot.kline('btc_cny', '5min', 130)
+    result = macd._is_long_price_under_highest_price_percent(kline,22704)
     if not result:
         print('test_is_long_price_under_highest_price_percent_should_return_false PASS')
     else:
         print('test_is_long_price_under_highest_price_percent_should_return_false FAILED<<<------')
 
 def test_is_long_price_under_highest_price_percent_should_return_true():
-    kline = okcoinSpot.kline('ltc_cny', '3min', 130)
-    result = macd._is_long_price_under_highest_price_percent(kline,300)
+    kline = okcoinSpot.kline('btc_cny', '5min', 130)
+    result = macd._is_long_price_under_highest_price_percent(kline,22704)
     if result:
         print('test_is_long_price_under_highest_price_percent_should_return_true PASS')
     else:

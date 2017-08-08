@@ -267,14 +267,33 @@ class MacdStrategy:
         : avoid long at first time price down from latest top price
         '''
         #latest_kline = kline
-        latest_kline = kline[-73:]# 47 + 26?
+        klen = 73# 47 + 26?
+        klen_amend = 35# 26 + 9?
+        latest_kline = kline[-klen:]
+        latest_kline_amend= kline[-klen_amend:]
         highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
-        #if highest price far enough
-        if len(latest_kline) - highest_index > 47:#47 = 26 + 12 + 9
+        highest_price_amend, highest_index_amend = self._get_highest_price_from_kline(latest_kline_amend)
+        '''
+        :修正双头: 例如btc 2017-08-08 22:05 5min不应该买进,最高点应该修正到20：05的233220
+        :而非 17:05的23372.5
+        '''
+        distance = klen - highest_index - (klen_amend - highest_index_amend)
+        if highest_price > highest_price_amend and abs(distance) >= 26:    
+            '''
+            :if difference between the two highest less than 0.005%, 
+            :and they far enough(26 periods?), then amend highest_index
+            :--------------H-------------------------------a-----------------------klen
+            :                                     ---------h-----------------------klen_amend
+            :index of a = klen - (klen_amend - index of h)
+            '''
+            if highest_price_amend >= (highest_price * 0.995):
+                highest_index = klen - (klen_amend - highest_index_amend)
+        #:if highest price far enough
+        if klen - highest_index > 47:#47 = 26 + 12 + 9
             #当long_price >= highest_price时,认为是在创新高,买入
             if long_price >= highest_price:
                 return True
-                #: return True run into problem: reason: ltc 3min long at 2017-08-08 13:48:24
+                #: return T·rue run into problem: reason: ltc 3min long at 2017-08-08 13:48:24
                 #return False
             else:
                 diff = highest_price * (1-percent)
