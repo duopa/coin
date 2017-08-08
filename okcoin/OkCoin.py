@@ -159,10 +159,10 @@ class OkCoin:
         self._do_short(price, amount)
 
     def _do_short(self, price, amount):
-        self._print_trade('short', price, amount)
-        if amount <= 0:            
+        if amount <= 0:
             self._logger.log('no engough coin for sale')
             return
+        self._print_trade('short', price, amount)
         trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'sell', price, amount))
         if trade_result['result']:
             self._last_short_order_id = trade_result['order_id']
@@ -199,8 +199,7 @@ class OkCoin:
         #如果某coin占总资金超过20%(可调整),停止买入此coin
         most_hold_percent = self._config['coin_most_hold_ratio']
         if holding * price >= total * most_hold_percent:
-            msg = '{coin_name} poisition excess {most_hold_percent}% money'.format(**{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent * 100})            
-            print('\t' + msg)
+            msg = '{coin_name} poisition excess {most_hold_percent}% money'.format(**{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent * 100})
             self._logger.log(msg)
             return 0
 
