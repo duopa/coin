@@ -266,14 +266,16 @@ class MacdStrategy:
         '''
         : avoid long at first time price down from latest top price
         '''
-        latest_kline = kline
-        #latest_kline = kline[-60:]
+        #latest_kline = kline
+        latest_kline = kline[-73:]# 47 + 26?
         highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
         #if highest price far enough
         if len(latest_kline) - highest_index > 47:#47 = 26 + 12 + 9
             #当long_price >= highest_price时,认为是在创新高,买入
             if long_price >= highest_price:
-                return True
+                #return True
+                #: return True run into problem: reason: ltc 3min long at 2017-08-08 13:48:24
+                return False
             else:
                 diff = highest_price * (1-percent)
                 if long_price <= diff:
