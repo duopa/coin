@@ -281,7 +281,7 @@ class OkCoin:
 
     def _print_trade(self, direction, price, amount):
         date = datetime.fromtimestamp(int(self._ticker['date']))
-        msg = 'at {datetime}: {direction} price:%{price} amount:{amount}'.format(**{'datetime': date, 'direction':direction, 'price': price, 'amount':amount})
+        msg = 'at {datetime}: {direction} price: {price} amount: {amount}'.format(**{'datetime': date, 'direction':direction, 'price': price, 'amount':amount})
         self._logger.log(msg)
         print('\t' + msg)
 
