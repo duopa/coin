@@ -1,4 +1,4 @@
 '''
 :
 '''
-from .OkCoin import OkCoin
+from .okcoin import OkCoin
