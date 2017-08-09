@@ -92,7 +92,7 @@ class MacdStrategy:
         if holding < 0.01:
             return False
         if last <= (avg_long_price * (1- stop_loss_ratio)):
-            self._stop_loss_count_down = 2
+            self._stop_loss_count_down = self._config['stop_loss_count_down']
             return True
         return False
     #-----------------------------------------------------------------------------------------------
