@@ -289,7 +289,7 @@ class MacdStrategy:
             if highest_price_amend >= (highest_price * 0.995):
                 highest_index = klen - (klen_amend - highest_index_amend)
         #:if highest price far enough
-        if klen - highest_index > 47:#47 = 26 + 12 + 9
+        if klen - highest_index > 26:#47 = 26 + 12 + 9
             #当long_price >= highest_price时,认为是在创新高,买入
             if long_price >= highest_price:
                 return True
