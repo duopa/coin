@@ -268,7 +268,7 @@ class MacdStrategy:
         '''
         #latest_kline = kline
         klen = 73# 47 + 26?
-        klen_amend = 35# 26 + 9?
+        klen_amend = 47#47 = 26 + 12 + 9
         latest_kline = kline[-klen:]
         latest_kline_amend= kline[-klen_amend:]
         highest_price, highest_index = self._get_highest_price_from_kline(latest_kline)
@@ -289,7 +289,7 @@ class MacdStrategy:
             if highest_price_amend >= (highest_price * 0.995):
                 highest_index = klen - (klen_amend - highest_index_amend)
         #:if highest price far enough
-        if klen - highest_index > 47:#47 = 26 + 12 + 9
+        if klen - highest_index > 35:# 26 + 9?
             #当long_price >= highest_price时,认为是在创新高,买入
             if long_price >= highest_price:
                 return True
