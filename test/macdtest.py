@@ -1,7 +1,8 @@
 import sys
 import os
 import json
-from strategy import *
+sys.path.append(os.path.abspath(os.path.join(os.path.realpath(os.path.dirname(__file__)), os.pardir)))
+from strategy import MacdStrategy
 from okcoin.OkcoinSpotAPI import OKCoinSpot
 from okcoin.key import *
 from okcoin.config import *
@@ -102,6 +103,13 @@ def test_is_long_price_under_highest_price_percent_should_return_true():
 test_is_long_price_under_highest_price_percent_should_return_true()
 test_is_long_price_under_highest_price_percent_should_return_false()
 #-------------------------------------------------------------------------------------------------------------------
+def test_price_vibrate_rate():
+    kline = okcoinSpot.kline('btc_cny', '3min', 130)
+    result = macd._get_price_vibrate_rate(kline)
+    print('price_vibrate_rate:{0}'.format(result))
+
+test_price_vibrate_rate()
+#-----------
 
 kline =[
     [

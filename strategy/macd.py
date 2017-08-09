@@ -367,6 +367,19 @@ class MacdStrategy:
             return True
         else:
             return False
+    
+    #----------------------------------------------------------------------------------------------
+    def _get_price_vibrate_rate(self, kline, periods=12):
+        """
+        :0.001
+        """
+        closes = self._get_close_from_kline(kline)[-periods:]
+        opens = self._get_open_from_kline(kline)[-periods:]
+        close_avg = abs(numpy.average(closes))
+        open_avg = abs(numpy.average(opens))
+        max_v = max(close_avg, open_avg)
+        diff = abs(close_avg - open_avg)
+        return diff / max_v
     #--------------------------------helper-------------------------------------------------------
     def _get_macd(self, kline):
         close_list = self._get_close_from_kline(kline)
@@ -381,6 +394,11 @@ class MacdStrategy:
             close.append(arr[4])
         return close
 
+    def _get_open_from_kline(self, kline):
+        opens = []
+        for arr in kline:
+            opens.append(arr[1])
+        return opens
     ###
     def _get_highest_price_from_kline(self, kline):
         '''

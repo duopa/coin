@@ -1,7 +1,11 @@
 
 import sys
 import os
-from strategy import *
+import sys
+import os
+#sys.path.insert(0, os.path.realpath(os.path.dirname(__file__)))
+sys.path.append(os.path.abspath(os.path.join(os.path.realpath(os.path.dirname(__file__)), os.pardir)))
+from strategy import MacdStrategy
 
 macd = MacdStrategy()
 ##################################################################
