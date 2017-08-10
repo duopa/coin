@@ -127,12 +127,6 @@ class OkCoin:
     def _long(self, price):
         print('------OkCoin: long------')
         self._update_user_info()
-        #为简单起见,如果有持仓,就不再买;缺点是失去了降低成本的可能性
-        '''
-        holding = float(self._funds['free'][self._symbol[0:3]])
-        if holding > 0.01:
-            return
-        '''
         amount = self._amount_to_long(price)
         self._print_trade('long', price, amount)
         if amount <= 0:
@@ -143,7 +137,9 @@ class OkCoin:
             self._last_trade_time = datetime.now()
             self._logger.log('long order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
         else:
-            print('\t%(result)s' %{'result': trade_result})
+            msg = '{0}'.format(trade_result)
+            print('\t' + msg)
+            self._logger.log(msg)
 
     def _stop_loss(self, price):
         print('------OkCoin: stop loss------')
@@ -169,8 +165,9 @@ class OkCoin:
             self._last_trade_time = datetime.now()
             self._logger.log('short order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
         else:
-            print('\tshort order placed failed')
-            self._logger.log('%(result)s' %{'result': trade_result})
+            msg = '{0}'.format(trade_result)
+            print('\t' + msg)
+            self._logger.log(msg)
 
     def _amount_to_short(self, stop_loss=False):
         lowest_unit, rnd = self._trade_config()
@@ -204,7 +201,7 @@ class OkCoin:
             return 0
 
         lowest_unit, rnd = self._trade_config()
-        purchase = total / 5
+        purchase = total * self._config['long_total_ratio']
         amount = 0
         if free_money >= purchase:
             amount = round(purchase / price, rnd)
