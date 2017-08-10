@@ -83,9 +83,10 @@ class OkCoin:
             with self._mutex:  # make sure only one thread is modifying counter at a given time
                 kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
                 self._ticker = self._okcoin_spot.ticker(self._symbol)
-                last = float(self._ticker['ticker']['last'])
-                long_price = float(self._ticker['ticker']['buy'])
-                short_price = float(self._ticker['ticker']['sell'])
+                ticker = self._ticker['ticker']
+                last = float(ticker['last'])
+                long_price = float(ticker['buy'])
+                short_price = float(ticker['sell'])
                 avg_long_price = self._get_last_n_long_avg_price(2, 10)
                 holding = float(self._funds['free'][self._coin_name])
 
@@ -93,10 +94,10 @@ class OkCoin:
                 signal = self._macd_strategy.execute(kline, **kwargs)
 
                 # stop loss first priority
-                if signal == 'sl':                    
+                if signal == 'sl':
                     #低于当前卖价卖出
-                    price = float(self._ticker['ticker']['sell']) - 0.01
-                    self._stop_loss(price)
+                    short_price = short_price - 0.01
+                    self._stop_loss(short_price)
 
                 if self._has_traded_in_near_periods_already(9):
                     return
@@ -219,7 +220,7 @@ class OkCoin:
         : 获得前n次买入的平均价格
         : 20170805: add weight, the last buy weight 0.8, the rest share 0.2
         '''
-        orderhistory = json.loads(self._okcoin_spot.orderHistory(self._symbol, '1', '1', historycount))
+        orderhistory = json.loads(self._okcoin_spot.order_history(self._symbol, '1', '1', historycount))
         if orderhistory['result']:
             orders = orderhistory['orders']
             long_price_his = []
