@@ -48,7 +48,7 @@ class MacdStrategy:
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
         and not self._is_hist_close_to_zero_for_n_periods(macdhist) \
-        and self._is_long_price_under_highest_price_percent(kline, long_price, 0.015) \
+        and self._is_long_price_under_highest_price_percent2(kline, long_price, 0.015) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
         if result:
@@ -293,7 +293,7 @@ class MacdStrategy:
             #当long_price >= highest_price时,认为是在创新高,买入
             if long_price >= highest_price:
                 return True
-                #: return T·rue run into problem: reason: ltc 3min long at 2017-08-08 13:48:24
+                #: return True run into problem: reason: ltc 3min long at 2017-08-08 13:48:24
                 #return False
             else:
                 diff = highest_price * (1-percent)
@@ -304,6 +304,24 @@ class MacdStrategy:
         else:
             #if too close to hightest price, do NOT long
             return False
+
+    def _is_long_price_under_highest_price_percent2(self, kline, long_price, percent=0.01):
+        '''
+        : use EMA slow as highest price instead, this is out of EMA avg price make more sense than absolute highest price
+        '''
+        highest_price, index_negtive = self._get_last_ema_dead_cross_avg_price(kline, 5, 30)
+        if abs(index_negtive) < 26:
+            return False
+        else:
+            #当long_price >= highest_price时,认为是在创新高,买入
+            if long_price >= highest_price:
+                return True
+            else:
+                diff = highest_price * (1-percent)
+                if long_price <= diff:
+                    return True
+                else:
+                    return False
     #-----------------------------------------------------------------------------------------------
     def _is_in_give_up_long_counting(self, kline):
         '''
@@ -406,3 +424,21 @@ class MacdStrategy:
         '''
         high_arr = list(map(lambda x: x[4], kline))
         return max(high_arr), numpy.argmax(high_arr)
+
+    def _get_last_ema_dead_cross_avg_price(self, kline, quick_periods, slow_periods):
+        '''
+        : return the slow ema value and index when EMA dead cross
+        '''
+        close_list = self._get_close_from_kline(kline)
+        close = numpy.array(close_list)
+        ema_quick = talib.EMA(close, quick_periods)
+        ema_slow = talib.EMA(close, slow_periods)
+        index = -1
+        for i in range(-1, -len(ema_slow), -1):
+            if ema_quick[i] < ema_slow[i]:
+                continue
+            else:
+                index = i
+                break
+
+        return ema_slow[index], index

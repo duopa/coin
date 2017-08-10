@@ -102,6 +102,12 @@ def test_is_long_price_under_highest_price_percent_should_return_true():
 
 test_is_long_price_under_highest_price_percent_should_return_true()
 test_is_long_price_under_highest_price_percent_should_return_false()
+
+def test_is_long_price_under_highest_price_percent2():
+    kline = okcoinSpot.kline('eth_cny', '3min', 130)
+    result = macd._is_long_price_under_highest_price_percent2(kline, 1988)
+
+test_is_long_price_under_highest_price_percent2()
 #-------------------------------------------------------------------------------------------------------------------
 def test_price_vibrate_rate():
     kline = okcoinSpot.kline('btc_cny', '3min', 130)
