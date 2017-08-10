@@ -7,6 +7,7 @@ import os
 import threading
 import time
 import json
+import math
 import traceback
 from datetime import datetime, timedelta
 import numpy
@@ -176,15 +177,17 @@ class OkCoin:
         if afs < lowest_unit:
             return 0
 
+        amount = 0
         #if stop loss, just short all coins
         if stop_loss:
-            return afs
+            amount = afs
         else:
             #short part of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
             amount = afs * self._config['short_ratio']
             if amount < lowest_unit:
                 amount = afs
-            return amount
+
+        return math.trunc(amount * 1000)/1000
 
     def _amount_to_long(self, price):
         '''
