@@ -107,8 +107,7 @@ class OkCoin:
                 elif signal == 's':
                     self._short(short_price)
                     self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})
-                print('---------------------------------------------------')
-                print('')
+                print('{0}\n'.format(ticker))
         except:
             tb = traceback.format_exc()
             self._logger.log(tb)
