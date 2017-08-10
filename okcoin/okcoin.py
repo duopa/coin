@@ -69,7 +69,7 @@ class OkCoin:
             self._update_user_info()
             while not self._stopped:
                 thread = threading.Thread(target=self.process)
-                thread.setDaemon(True)  # so we don't need to track/join threads
+                thread.daemon = True  # so we don't need to track/join threads
                 thread.start()  # start the thread, this is non-blocking
                 time.sleep(self._frequency)
         except:
