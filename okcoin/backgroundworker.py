@@ -33,7 +33,7 @@ class CancelOrderThread(threading.Thread):
                 self._logger.log(tb)
 
     def _cancel_hanging_order(self):
-        orderhistory = json.loads(self._okcoin_spot.orderHistory(self._symbol, '0', '1', 2))
+        orderhistory = json.loads(self._okcoin_spot.order_history(self._symbol, '0', '1', 2))
         if orderhistory['result'] and int(orderhistory['total']) > 0:
             orders = orderhistory['orders']
             for i in range(0, len(orders)):
@@ -42,7 +42,7 @@ class CancelOrderThread(threading.Thread):
                 offset = datetime.now() - timedelta(seconds=120)
                 if create_time < offset:
                     order_id = orders[i]['order_id']
-                    result = self._okcoin_spot.cancelOrder(self._symbol, order_id)
+                    result = self._okcoin_spot.cancel_order(self._symbol, order_id)
                     if result['result']:
                         self._logger.log('order {0} cancelled successfully'.format(order_id))
                     else:
@@ -51,5 +51,5 @@ class CancelOrderThread(threading.Thread):
             '''
             order_ids =','.join(list(map(lambda x: x['order_id'], orders)))
             if order_ids:
-                self._okcoin_spot.cancelOrder(self._symbol, order_ids)
+                self._okcoin_spot.cancel_order(self._symbol, order_ids)
             '''

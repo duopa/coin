@@ -7,6 +7,7 @@ import os
 import threading
 import time
 import json
+import math
 import traceback
 from datetime import datetime, timedelta
 import numpy
@@ -83,9 +84,10 @@ class OkCoin:
             with self._mutex:  # make sure only one thread is modifying counter at a given time
                 kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
                 self._ticker = self._okcoin_spot.ticker(self._symbol)
-                last = float(self._ticker['ticker']['last'])
-                long_price = float(self._ticker['ticker']['buy'])
-                short_price = float(self._ticker['ticker']['sell'])
+                ticker = self._ticker['ticker']
+                last = float(ticker['last'])
+                long_price = float(ticker['buy'])
+                short_price = float(ticker['sell'])
                 avg_long_price = self._get_last_n_long_avg_price(2, 10)
                 holding = float(self._funds['free'][self._coin_name])
 
@@ -93,10 +95,10 @@ class OkCoin:
                 signal = self._macd_strategy.execute(kline, **kwargs)
 
                 # stop loss first priority
-                if signal == 'sl':                    
+                if signal == 'sl':
                     #低于当前卖价卖出
-                    price = float(self._ticker['ticker']['sell']) - 0.01
-                    self._stop_loss(price)
+                    short_price = short_price - 0.01
+                    self._stop_loss(short_price)
 
                 if self._has_traded_in_near_periods_already(9):
                     return
@@ -106,8 +108,7 @@ class OkCoin:
                 elif signal == 's':
                     self._short(short_price)
                     self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})
-                print('---------------------------------------------------')
-                print('')
+                print('{0}\n'.format(ticker))
         except:
             tb = traceback.format_exc()
             self._logger.log(tb)
@@ -176,15 +177,17 @@ class OkCoin:
         if afs < lowest_unit:
             return 0
 
+        amount = 0
         #if stop loss, just short all coins
         if stop_loss:
-            return afs
+            amount = afs
         else:
             #short part of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
             amount = afs * self._config['short_ratio']
             if amount < lowest_unit:
                 amount = afs
-            return amount
+
+        return math.trunc(amount * 1000)/1000
 
     def _amount_to_long(self, price):
         '''
@@ -219,7 +222,7 @@ class OkCoin:
         : 获得前n次买入的平均价格
         : 20170805: add weight, the last buy weight 0.8, the rest share 0.2
         '''
-        orderhistory = json.loads(self._okcoin_spot.orderHistory(self._symbol, '1', '1', historycount))
+        orderhistory = json.loads(self._okcoin_spot.order_history(self._symbol, '1', '1', historycount))
         if orderhistory['result']:
             orders = orderhistory['orders']
             long_price_his = []

@@ -310,7 +310,7 @@ class MacdStrategy:
         : use EMA slow as highest price instead, this is out of EMA avg price make more sense than absolute highest price
         '''
         highest_price, index_negtive = self._get_last_ema_dead_cross_avg_price(kline, 5, 30)
-        if abs(index_negtive) < 26:
+        if abs(index_negtive) < 21: # 12 + 9?
             return False
         else:
             #当long_price >= highest_price时,认为是在创新高,买入
