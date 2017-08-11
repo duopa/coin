@@ -45,14 +45,14 @@ class OkCoin:
         self._logger = Logger('c:/logs', symbol)
 
         if self._type == '3min':
-            self._config = config_3min
-            self._macd_strategy = MacdStrategy(**config_3min)
+            self._config = json.loads(config_3min)
+            self._macd_strategy = MacdStrategy(**self._config)
         elif self._type == '5min':
-            self._config = config_5min
-            self._macd_strategy = MacdStrategy(**config_5min)
+            self._config = json.loads(config_5min)
+            self._macd_strategy = MacdStrategy(**self._config)
         else:
-            self._config = config_3min
-            self._macd_strategy = MacdStrategy(**config_3min)
+            self._config = json.loads(config_3min)
+            self._macd_strategy = MacdStrategy(**self._config)
 
     def run(self):
         '''

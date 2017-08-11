@@ -48,7 +48,7 @@ class MacdStrategy:
         and self._is_slope_changing_to_positive(macd) \
         and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
         and not self._is_hist_close_to_zero_for_n_periods(macdhist) \
-        and self._is_long_price_under_highest_price_percent2(kline, long_price, 0.015) \
+        and self._is_long_price_under_highest_price_percent2(kline, long_price) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
         if result:
@@ -305,7 +305,7 @@ class MacdStrategy:
             #if too close to hightest price, do NOT long
             return False
 
-    def _is_long_price_under_highest_price_percent2(self, kline, long_price, percent=0.01):
+    def _is_long_price_under_highest_price_percent2(self, kline, long_price):
         '''
         : use EMA slow as highest price instead, this is out of EMA avg price make more sense than absolute highest price
         '''
@@ -317,7 +317,8 @@ class MacdStrategy:
             if long_price >= highest_price:
                 return True
             else:
-                diff = highest_price * (1-percent)
+                percent = self._config["long_price_down_ratio"]
+                diff = highest_price * (1 - percent)
                 if long_price <= diff:
                     return True
                 else:
