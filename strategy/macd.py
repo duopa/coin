@@ -96,31 +96,24 @@ class MacdStrategy:
             return True
         return False
     #-----------------------------------------------------------------------------------------------
-    def _is_slope_changing_to_positive(self, linedata):
+    def _is_slope_changing_to_positive(self, macd):
         '''
         : whether slope of dif line head up
         : 找一个更好的算法确定方向改变
         '''
         #最低点法判定方向改变向上
-        if len(linedata) < 12:
+        if len(macd) < 12:
             return False
-        temp = linedata[-12:]
+        temp = macd[-12:]
         #min = numpy.min(temp)
         #index = temp.index(min)
         index = numpy.argmin(temp)
         #会导致交易两次
         #if(2 <= len(temp) - index <= 3):
-        if len(temp) - index == 3:#最低点在倒数第三个表面方向向上(可能要调整)
+        if len(temp) - index == 3 and macd[-1] > macd[-2]:#最低点在倒数第三个表面方向向上(可能要调整)
             return True
         else:
             return False
-        '''
-        if (linedata[-1] >= linedata[-2]) \
-        and ((linedata[-2] <= linedata[-3]) or (linedata[-2] <= linedata[-4]) or (linedata[-2] < linedata[-5])):
-            return True
-        else:
-            return False
-        '''
     #-----------------------------------------------------------------------------------------------
     def _is_slope_changing_to_negtive(self, linedata):
         '''
