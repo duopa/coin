@@ -106,6 +106,7 @@ class OkCoin:
                 if signal == 'l':
                     self._long(long_price)
                 elif signal == 's':
+                    short_price = short_price - 0.01
                     self._short(short_price)
                     self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})
                 print('{0}\n'.format(ticker))
