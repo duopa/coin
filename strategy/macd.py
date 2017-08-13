@@ -383,6 +383,7 @@ class MacdStrategy:
     
     def _is_volumn_up_sharply(self, kline, quick_periods, slow_periods):
         '''
+        : volumn up sharply, and quick ema above slow ema, and close bigger than open
         : this is not verified yet??????
         '''
         close_list = self._get_close_from_kline(kline)
@@ -391,7 +392,8 @@ class MacdStrategy:
         ema_slow = talib.EMA(close, slow_periods)
         volumns = list(map(lambda x: x[5], kline))
         avg = numpy.average(volumns[-31:-1])
-        if (volumns[-1] > avg * 6) and ema_quick[-1] > ema_slow[-1]:
+        lastest_candle = kline[-1]
+        if (volumns[-1] > avg * 6) and ema_quick[-1] > ema_slow[-1] and lastest_candle[4] > lastest_candle[1]:
             return True
         else:
             return False
