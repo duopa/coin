@@ -51,8 +51,8 @@ class MacdStrategy:
         and self._is_long_price_under_highest_price_percent2(kline, long_price) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
-        volumn_signal = self._is_volumn_up_sharply(kline, 20, 30)
-        if result or volumn_signal:
+        #volumn_signal = self._is_volumn_up_sharply(kline, 20, 30)
+        if result:
             #is_in_give_up_counting = self._is_in_give_up_long_counting(kline)
             is_in_stop_loss_counting = self._is_in_stop_loss_counting()
             if is_in_stop_loss_counting:
