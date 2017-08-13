@@ -12,7 +12,7 @@ config_3min = {
     "short_ratio": 0.4,
     "coin_most_hold_ratio": 0.3,
     "long_total_ratio": 0.25,
-    "long_price_down_ratio": 0.02,
+    "long_price_down_ratio": 0.025,
     "stop_loss_count_down": 1,
     "give_up_long_count_down": 2
 }
@@ -23,7 +23,7 @@ config_5min = {
     "short_ratio": 0.4,
     "coin_most_hold_ratio": 0.3,
     "long_total_ratio": 0.25,
-    "long_price_down_ratio": 0.02,
+    "long_price_down_ratio": 0.04,
     "stop_loss_count_down": 1,
     "give_up_long_count_down": 2
 }
