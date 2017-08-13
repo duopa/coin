@@ -38,6 +38,7 @@ class OkCoin:
         self._ticker = {}
         self._last_long_order_id = 0
         self._last_short_order_id = 0
+        self._short_occurs = 0
         self._config = None
         self._last_trade_time = datetime.now() - timedelta(days=1)
         self._mutex = threading.Lock()
@@ -135,6 +136,8 @@ class OkCoin:
             return
         trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'buy', price, amount))
         if trade_result['result']:
+            #:reset short_occurs, it's better to check this long trade really filled
+            self._short_occurs = 0
             self._last_long_order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
             self._logger.log('long order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
@@ -163,6 +166,9 @@ class OkCoin:
         self._print_trade('short', price, amount)
         trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'sell', price, amount))
         if trade_result['result']:
+            #:increase short_occurs
+            short_occurs_len = len(self._config['short_ratio'])
+            self._short_occurs = self._short_occurs + 1 if self._short_occurs < (short_occurs_len -1) else self._short_occurs
             self._last_short_order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
             self._logger.log('short order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
@@ -184,7 +190,7 @@ class OkCoin:
             amount = afs
         else:
             #short part of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
-            amount = afs * self._config['short_ratio']
+            amount = afs * self._config['short_ratio'][self._short_occurs]
             if amount < lowest_unit:
                 amount = afs
 

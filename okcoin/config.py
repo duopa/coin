@@ -9,7 +9,7 @@ url_com = "www.okcoin.com"
 config_3min = {
     "stop_profit_ratio": 0.025,
     "stop_loss_ratio": 0.04,
-    "short_ratio": 0.4,
+    "short_ratio": [0.2, 0.3, 0.5],
     "coin_most_hold_ratio": 0.3,
     "long_total_ratio": 0.25,
     "long_price_down_ratio": 0.025,
@@ -20,7 +20,7 @@ config_3min = {
 config_5min = {
     "stop_profit_ratio": 0.035,
     "stop_loss_ratio": 0.04,
-    "short_ratio": 0.4,
+    "short_ratio": [0.2, 0.3, 0.5],
     "coin_most_hold_ratio": 0.3,
     "long_total_ratio": 0.25,
     "long_price_down_ratio": 0.04,
