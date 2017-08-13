@@ -13,7 +13,7 @@ apikey = api_key
 secretkey = secret_key
 okcoinRESTURL = url_cn
 okcoinSpot = OKCoinSpot(okcoinRESTURL,apikey,secretkey)
-macd = MacdStrategy()
+macd = MacdStrategy(**config_3min)
 
 '''
 ticker = '{"date":"1410431279","ticker":{ "buy":"33.15","high":"34.15","last":"33.15","low":"32.05","sell":"33.16","vol":"10532696.39199642"}}'
@@ -116,6 +116,11 @@ def test_price_vibrate_rate():
 
 test_price_vibrate_rate()
 #-----------
+def test_is_volumn_up_sharply():
+    kline = okcoinSpot.kline('btc_cny', '3min', 130)
+    result = macd._is_volumn_up_sharply(kline, 20, 30)
+    print(result)
+test_is_volumn_up_sharply()
 
 kline =[
     [

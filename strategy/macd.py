@@ -51,7 +51,8 @@ class MacdStrategy:
         and self._is_long_price_under_highest_price_percent2(kline, long_price) \
         and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
 
-        if result:
+        volumn_signal = self._is_volumn_up_sharply(kline, 20, 30)
+        if result or volumn_signal:
             #is_in_give_up_counting = self._is_in_give_up_long_counting(kline)
             is_in_stop_loss_counting = self._is_in_stop_loss_counting()
             if is_in_stop_loss_counting:
@@ -380,6 +381,20 @@ class MacdStrategy:
         else:
             return False
     
+    def _is_volumn_up_sharply(self, kline, quick_periods, slow_periods):
+        '''
+        : this is not verified yet??????
+        '''
+        close_list = self._get_close_from_kline(kline)
+        close = numpy.array(close_list)
+        ema_quick = talib.EMA(close, quick_periods)
+        ema_slow = talib.EMA(close, slow_periods)
+        volumns = list(map(lambda x: x[5], kline))
+        avg = numpy.average(volumns[-31:-1])
+        if (volumns[-1] > avg * 6) and ema_quick[-1] > ema_slow[-1]:
+            return True
+        else:
+            return False
     #----------------------------------------------------------------------------------------------
     def _get_price_vibrate_rate(self, kline, periods=12):
         """
