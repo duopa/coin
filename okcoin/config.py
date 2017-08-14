@@ -18,7 +18,7 @@ config_3min = {
 }
 
 config_5min = {
-    "stop_profit_ratio": 0.03,
+    "stop_profit_ratio": 0.04,
     "stop_loss_ratio": 0.045,
     "short_ratio": [0.2, 0.3, 0.5],
     "coin_most_hold_ratio": 0.3,

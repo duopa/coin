@@ -180,7 +180,7 @@ class OkCoin:
     def _amount_to_short(self, stop_loss=False):
         lowest_unit, rnd = self._trade_config()
         #available for sale
-        afs = float(self._funds['free'][self._symbol[0:3]])
+        afs = float(self._funds['free'][self._coin_name])
         if afs < lowest_unit:
             return 0
 
@@ -192,7 +192,8 @@ class OkCoin:
             #short part of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
             amount = afs * self._config['short_ratio'][self._short_occurs]
             if amount < lowest_unit:
-                amount = afs
+                #amount = afs
+                amount = lowest_unit
 
         return math.trunc(amount * 1000)/1000
 
