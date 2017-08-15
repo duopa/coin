@@ -256,7 +256,7 @@ class MacdStrategy:
         else:
             return False
     #-----------------------------------------------------------------------------------------------
-    def _is_long_price_under_highest_price_percent(self, kline, long_price, percent=0.01):
+    def _is_long_price_under_highest_price_percent(self, kline, long_price):
         '''
         : avoid long at first time price down from latest top price
         '''
@@ -272,9 +272,9 @@ class MacdStrategy:
         :而非 17:05的23372.5
         '''
         distance = klen - highest_index - (klen_amend - highest_index_amend)
-        if highest_price > highest_price_amend and abs(distance) >= 26:    
+        if highest_price > highest_price_amend and abs(distance) >= 26:
             '''
-            :if difference between the two highest less than 0.005%, 
+            :if difference between the two highest less than 0.005%,
             :and they far enough(26 periods?), then amend highest_index
             :--------------H-------------------------------a-----------------------klen
             :                                     ---------h-----------------------klen_amend
@@ -283,14 +283,15 @@ class MacdStrategy:
             if highest_price_amend >= (highest_price * 0.995):
                 highest_index = klen - (klen_amend - highest_index_amend)
         #:if highest price far enough
-        if klen - highest_index > 35:# 26 + 9?
+        if klen - highest_index > 21:# 12 + 9?
             #当long_price >= highest_price时,认为是在创新高,买入
             if long_price >= highest_price:
                 return True
                 #: return True run into problem: reason: ltc 3min long at 2017-08-08 13:48:24
                 #return False
             else:
-                diff = highest_price * (1-percent)
+                percent = self._config["long_price_down_ratio"]
+                diff = highest_price * (1 - percent)
                 if long_price <= diff:
                     return True
                 else:
