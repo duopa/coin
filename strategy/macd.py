@@ -341,12 +341,12 @@ class MacdStrategy(StrategyBase):
         else:
             return False
     #-----------------------------------------------------------------------------------------------
-    def _is_dif_above_zero_back_n_periods(self, dif, periods=6):
+    def _is_dif_above_zero_back_n_periods(self, periods=6):
         '''
         short:
         判断dif是否已经在0轴上方n个周期, 避免假摔
         '''
-        if dif[-periods] > 0:
+        if self._macd[-periods] > 0:
             return True
         else:
             return False
