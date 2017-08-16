@@ -1,19 +1,22 @@
 """
 """
+from .strategybase import StrategyBase
 from datetime import datetime
 import numpy
 import talib
 
-class MacdStrategy:
+class MacdStrategy(StrategyBase):
     '''
     :
     '''
     def __init__(self, **kwargs):
-        #self.__kline = kline
-        self._stop_loss_count_down = 0
+        super().__init__(**kwargs)
         self._config = kwargs
         self._pre_highest_price = 0
         self._give_up_long_count_down = 1
+        self._macd = []
+        self._macdsignal = []
+        self._macdhist = []
     #-----------------------------------------------------------------------------------------------
     #def execute(self, kline, last, long_price, avg_long_price, holding):
     def  execute(self, kline, **kwargs):
@@ -23,33 +26,21 @@ class MacdStrategy:
         #now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         #print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})
 
-        last = kwargs['last']
-        long_price = kwargs['long_price']
-        short_price = kwargs['short_price']
-        avg_long_price = kwargs['avg_long_price']
-        holding = kwargs['holding']
-
-        if self._should_stop_loss(last, avg_long_price, holding):
-            return 'sl'
-        elif self._long_signal(kline, long_price):
-            return 'l'
-        elif self._short_signal(kline, short_price, avg_long_price):
-            return 's'
-        else:
-            return ''
+        self._kline = kline
+        #dif, dea, diff - dea?
+        self._macd, self._macdsignal, self._macdhist = self._get_macd()
+        return super().execute(kline, **kwargs)
     #-----------------------------------------------------------------------------------------------
-    def _long_signal(self, kline, long_price):
+    def _long_signal(self, long_price):
         '''
         : long signal
         '''
-        #dif, dea, diff - dea?
-        macd, macdsignal, macdhist = self._get_macd(kline)
-        result = (macd[-1] < 0) and (macdsignal[-1] < 0) \
-        and self._is_slope_changing_to_positive(macd) \
-        and self._is_hist_under_zero_back_n_periods(macdhist, 8) \
-        and not self._is_hist_close_to_zero_for_n_periods(macdhist) \
-        and self._is_long_price_under_highest_price_percent2(kline, macdhist, long_price) \
-        and (self._is_dif_under_dea_back_n_periods(macd, macdsignal) or self._is_lowest_hist(macdhist) or self._is_pre_dif_dea_far_enough(macd, macdsignal))
+        result = (self._macd[-1] < 0) and (self._macdsignal[-1] < 0) \
+        and self._is_slope_changing_to_positive() \
+        and self._is_hist_under_zero_back_n_periods(8) \
+        and not self._is_hist_close_to_zero_for_n_periods() \
+        and self._is_long_price_under_highest_price_percent2(long_price) \
+        and (self._is_dif_under_dea_back_n_periods() or self._is_lowest_hist() or self._is_pre_dif_dea_far_enough())
 
         #volumn_signal = self._is_volumn_up_sharply(kline, 20, 30)
         if result:
@@ -62,19 +53,17 @@ class MacdStrategy:
         else:
             return False
     #-----------------------------------------------------------------------------------------------
-    def _short_signal(self, kline, short_price, avg_long_price):
+    def _short_signal(self, short_price, avg_history_price):
         '''
         : short signal
         '''
-        if not self._is_reasonalbe_short_price(short_price, avg_long_price):
+        if not self._is_reasonalbe_short_price(short_price, avg_history_price):
             return False
-        #dif, dea, diff - dea?
-        macd, macdsignal, macdhist = self._get_macd(kline)
-        isslopechangingtonegtive = self._is_slope_changing_to_negtive(macd)
-        isdifabovedeabacknperiods = self._is_dif_above_dea_back_n_periods(macd, macdsignal, 8)
-        ishighesthist = self._is_highest_hist(macdhist)
-        ispredifdeafarenough = self._is_pre_dif_dea_far_enough(macd, macdsignal)
-        dif_above_zero_back_n_periods = self._is_dif_above_zero_back_n_periods(macd, 6)
+        isslopechangingtonegtive = self._is_slope_changing_to_negtive()
+        isdifabovedeabacknperiods = self._is_dif_above_dea_back_n_periods(8)
+        ishighesthist = self._is_highest_hist()
+        ispredifdeafarenough = self._is_pre_dif_dea_far_enough()
+        dif_above_zero_back_n_periods = self._is_dif_above_zero_back_n_periods(6)
         '''
         try:
             print('\tshot_signal: %(a)s %(b)s %(c)s %(d)s' %{'a': isslopechangingtonegtive, 'b': isdifabovedeabacknperiods, 'c': ishighesthist, 'd':ispredifdeafarenough})
@@ -97,33 +86,33 @@ class MacdStrategy:
             return True
         return False
     #-----------------------------------------------------------------------------------------------
-    def _is_slope_changing_to_positive(self, macd):
+    def _is_slope_changing_to_positive(self):
         '''
         : whether slope of dif line head up
         : 找一个更好的算法确定方向改变
         '''
         #最低点法判定方向改变向上
-        if len(macd) < 12:
+        if len(self._macd) < 12:
             return False
-        temp = macd[-12:]
+        temp = self._macd[-12:]
         #min = numpy.min(temp)
         #index = temp.index(min)
         index = numpy.argmin(temp)
         #会导致交易两次
         #if(2 <= len(temp) - index <= 3):
-        if len(temp) - index == 3 and macd[-1] > macd[-2]:#最低点在倒数第三个表面方向向上(可能要调整)
+        if len(temp) - index == 3 and self._macd[-1] > self._macd[-2]:#最低点在倒数第三个表面方向向上(可能要调整)
             return True
         else:
             return False
     #-----------------------------------------------------------------------------------------------
-    def _is_slope_changing_to_negtive(self, linedata):
+    def _is_slope_changing_to_negtive(self):
         '''
         : whether slope of diff line heading down
         '''
         #最高点法判定方向改变向下
-        if len(linedata) < 12:
+        if len(self._macd) < 12:
             return False
-        temp = linedata[-12:]
+        temp = self._macd[-12:]
         #max = numpy.min(temp)
         #index = temp.index(max)
         index = numpy.argmax(temp)
@@ -142,10 +131,11 @@ class MacdStrategy:
             return False
         '''
     #-----------------------------------------------------------------------------------------------
-    def _is_dif_under_dea_back_n_periods(self, dif, dea, periods=14):
+    def _is_dif_under_dea_back_n_periods(self, periods=14):
         '''
         : why 14
         '''
+        dif, dea = self._macd, self._macdsignal
         for i in range(-periods, -1):
             if dif[i] > dea[i]:
                 return False
@@ -156,10 +146,11 @@ class MacdStrategy:
         return True if dif_avg < dea_avg else False
         '''
     #-----------------------------------------------------------------------------------------------
-    def _is_dif_above_dea_back_n_periods(self, dif, dea, periods=7):
+    def _is_dif_above_dea_back_n_periods(self, periods=7):
         '''
         : periods = 7, 卖出条件相对12更宽松
         '''
+        dif, dea = self._macd, self._macdsignal
         for i in range(-periods, -1):
             if dif[i] < dea[i]:
                 return False
@@ -180,43 +171,44 @@ class MacdStrategy:
         return True
 
     #-----------------------------------------------------------------------------------------------
-    def _is_hist_under_zero_back_n_periods(self, macdhist, periods=8):
+    def _is_hist_under_zero_back_n_periods(self, periods=8):
         '''
         : masc hist bar 是否在0轴下n个周期
         : 在_is_dea_under_zero_back_n_periods的基础上改进
         '''
         for i in range(-periods, -2):
-            if macdhist[i] > 0:
+            if self._macdhist[i] > 0:
                 return False
             return True
 
     #-----------------------------------------------------------------------------------------------
-    def _is_lowest_hist(self, macdhist):
+    def _is_lowest_hist(self):
         '''
         : 判断当前柱是否最低
         '''
-        index = numpy.argmin(macdhist)
+        index = numpy.argmin(self._macdhist)
         if index == -1 or index == -2:
             return True
         else:
             return False
 
     #-----------------------------------------------------------------------------------------------
-    def _is_highest_hist(self, macdhist):
+    def _is_highest_hist(self):
         '''
         : 判断当前柱是否最高
         '''
-        index = numpy.argmax(macdhist)
+        index = numpy.argmax(self._macdhist)
         if index == -1 or index == -2:
             return True
         else:
             return False
 
     #-----------------------------------------------------------------------------------------------
-    def _is_pre_dif_dea_far_enough(self, dif, dea, distance=0.3):
+    def _is_pre_dif_dea_far_enough(self, distance=0.3):
         '''
         : 判断dif和dea的距离,距离越大表示信号越强
         '''
+        dif, dea = self._macd, self._macdsignal
         max_v = abs(dif[-2])
         min_v = abs(dea[-2])
         #swap
@@ -231,18 +223,21 @@ class MacdStrategy:
         return False
 
     #-----------------------------------------------------------------------------------------------
-    def _is_golden_cross(self, dif, dea):
+    def _is_golden_cross(self):
+        dif, dea = self._macd, self._macdsignal
         return True if(dif[-1] > dea[-1]) and (dif[-3] < dea[-3]) else False
 
     #-----------------------------------------------------------------------------------------------
-    def _is_dead_cross(self, dif, dea):
+    def _is_dead_cross(self):
+        dif, dea = self._macd, self._macdsignal
         return True if (dif[-1] < dea[-1]) and (dif[-3] > dea[-3]) else False
 
     #-----------------------------------------------------------------------------------------------
-    def _is_dif_negtive_when_hist_changeing_to_negtive(self, dif, hist):
+    def _is_dif_negtive_when_hist_changeing_to_negtive(self):
         '''
         用于买入前判断当最近一次hist又0轴上变成0轴下时,diff是否已经在0轴下, 如果在则返回true
         '''
+        dif, hist = self._macd, self._macdhist
         index = -1
         for i in range(-1, -len(hist), -1):
             if hist[i] <= 0:
@@ -300,11 +295,11 @@ class MacdStrategy:
             #if too close to hightest price, do NOT long
             return False
 
-    def _is_long_price_under_highest_price_percent2(self, kline, macdhist, long_price):
+    def _is_long_price_under_highest_price_percent2(self, long_price):
         '''
         : use EMA slow as highest price instead, this is out of EMA avg price make more sense than absolute highest price
         '''
-        highest_price, index_negtive = self._get_last_ema_dead_cross_avg_price(kline, 5, 30)
+        highest_price, index_negtive = self._get_last_ema_dead_cross_avg_price(5, 30)
         if abs(index_negtive) < 21: # 12 + 9?
             return False
         else:
@@ -315,7 +310,7 @@ class MacdStrategy:
                 percent = self._config["long_price_down_ratio"]
                 diff = highest_price * (1 - percent)
                 #: if negtive hist under zero enough
-                ishuzbnp = self._is_hist_under_zero_back_n_periods(macdhist, 30)
+                ishuzbnp = self._is_hist_under_zero_back_n_periods(30)
                 if long_price <= diff or ishuzbnp:
                     return True
                 else:
@@ -369,14 +364,14 @@ class MacdStrategy:
         else:
             return True
     #----------------------------------------------------------------------------------------------
-    def _is_hist_close_to_zero_for_n_periods(self, hist, periods=9):
+    def _is_hist_close_to_zero_for_n_periods(self, periods=9):
         '''
         : if avg hist almost close to zero for long time(the hist bar hight is below 15% of highest bar hight), do NOT long
         '''
-        lowest_hist = abs(min(hist))
+        lowest_hist = abs(min(self._macdhist))
         sum_hist = 0
         for i in range(-periods, -1):
-            sum_hist += hist[i]
+            sum_hist += self._macdhist[i]
 
         avg_hist = abs(sum_hist) / periods
         if avg_hist / lowest_hist < 0.15:
@@ -389,7 +384,7 @@ class MacdStrategy:
         : volumn up sharply, and quick ema above slow ema, and close bigger than open
         : this is not verified yet??????
         '''
-        close_list = self._get_close_from_kline(kline)
+        close_list = self._get_close_from_kline()
         close = numpy.array(close_list)
         ema_quick = talib.EMA(close, quick_periods)
         ema_slow = talib.EMA(close, slow_periods)
@@ -401,49 +396,30 @@ class MacdStrategy:
         else:
             return False
     #----------------------------------------------------------------------------------------------
-    def _get_price_vibrate_rate(self, kline, periods=12):
+    def _get_price_vibrate_rate(self, periods=12):
         """
         :0.001
         """
-        closes = self._get_close_from_kline(kline)[-periods:]
-        opens = self._get_open_from_kline(kline)[-periods:]
+        closes = self._get_close_from_kline()[-periods:]
+        opens = self._get_open_from_kline()[-periods:]
         close_avg = abs(numpy.average(closes))
         open_avg = abs(numpy.average(opens))
         max_v = max(close_avg, open_avg)
         diff = abs(close_avg - open_avg)
         return diff / max_v
-    #--------------------------------helper-------------------------------------------------------
-    def _get_macd(self, kline):
-        close_list = self._get_close_from_kline(kline)
-        close = numpy.array(close_list)
-        #dif, dea, diff - dea?
-        return talib.MACD(close, fastperiod=12, slowperiod=26, signalperiod=9)
-
-    ### get close price from kline
-    def _get_close_from_kline(self, kline):
-        close = []
-        for arr in kline:
-            close.append(arr[4])
-        return close
-
-    def _get_open_from_kline(self, kline):
-        opens = []
-        for arr in kline:
-            opens.append(arr[1])
-        return opens
-    ###
-    def _get_highest_price_from_kline(self, kline):
+    #--------------------------------HELPER-------------------------------------------------------
+    def _get_highest_price_from_kline(self, latest_kline):
         '''
         : 2017-08-05: change from highest to close
         '''
-        high_arr = list(map(lambda x: x[4], kline))
+        high_arr = list(map(lambda x: x[4], latest_kline))
         return max(high_arr), numpy.argmax(high_arr)
 
-    def _get_last_ema_dead_cross_avg_price(self, kline, quick_periods, slow_periods):
+    def _get_last_ema_dead_cross_avg_price(self, quick_periods, slow_periods):
         '''
         : return the slow ema value and index when EMA dead cross
         '''
-        close_list = self._get_close_from_kline(kline)
+        close_list = self._get_close_from_kline()
         close = numpy.array(close_list)
         ema_quick = talib.EMA(close, quick_periods)
         ema_slow = talib.EMA(close, slow_periods)
