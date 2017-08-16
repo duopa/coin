@@ -11,7 +11,6 @@ class MacdStrategy(StrategyBase):
     '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._config = kwargs
         self._pre_highest_price = 0
         self._give_up_long_count_down = 1
         self._macd = []
