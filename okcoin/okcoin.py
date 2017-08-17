@@ -14,7 +14,7 @@ import numpy
 from strategy import MacdStrategy
 from okcoin.OkcoinSpotAPI import OKCoinSpot
 from .key import api_key, secret_key
-from .config import url_cn, config_3min, config_5min
+from .config import url_cn, config_3min, config_5min, log_path, signal_test_log_path
 from common import Logger
 
 class OkCoin:
@@ -44,7 +44,7 @@ class OkCoin:
         self._mutex = threading.Lock()
         self._strategy = None
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
-        self._logger = Logger('c:/logs', symbol)
+        self._logger = None #Logger('c:/logs', symbol)
     #------properties------
     @property
     def symbol(self):
@@ -73,6 +73,7 @@ class OkCoin:
         https://stackoverflow.com/questions/44768688/python-how-to-do-a-periodic-non-blocking-lo
         '''
         try:
+            self._logger = Logger(log_path, self.symbol)
             print('---------------CONFIG---------------')
             print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self.config['stop_profit_ratio']})
             print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self.config['stop_loss_ratio']})
@@ -94,7 +95,7 @@ class OkCoin:
         """
         :
         """
-        try:
+        try:            
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('======>>>process %(symbol)s %(type)s start at %(now)s ...' %{'symbol': self._symbol, 'type': self._type, 'now':now})
             with self._mutex:  # make sure only one thread is modifying counter at a given time
@@ -129,6 +130,58 @@ class OkCoin:
         except:
             tb = traceback.format_exc()
             self._logger.log(tb)
+
+    #-----------------------------------------------------------------------------------------------
+    def run_signal_test(self):
+        '''
+        : only test signal, not trade
+        '''
+        try:
+            self._logger = Logger(signal_test_log_path, self.symbol)
+            print('---------------CONFIG---------------')
+            print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self.config['stop_profit_ratio']})
+            print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self.config['stop_loss_ratio']})
+            print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self.config['short_ratio']})
+            print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self.config['coin_most_hold_ratio']})
+            print('')
+            self._logger.log('---------------start running---------------')
+            self._update_user_info()
+            while not self._stopped:
+                thread = threading.Thread(target=self.process_signal_test)
+                thread.daemon = True  # so we don't need to track/join threads
+                thread.start()  # start the thread, this is non-blocking
+                time.sleep(self._frequency)
+        except:
+            tb = traceback.format_exc()
+            self._logger.log(tb)
+
+    def process_signal_test(self):
+        """
+        :
+        """
+        try:
+            print("------DEBUG------")
+            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print('======>>>process %(symbol)s %(type)s start at %(now)s ...' %{'symbol': self._symbol, 'type': self._type, 'now':now})
+            with self._mutex:  # make sure only one thread is modifying counter at a given time
+                kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
+                self._ticker = self._okcoin_spot.ticker(self._symbol)
+                ticker = self._ticker['ticker']
+                last = float(ticker['last'])
+                long_price = float(ticker['buy'])
+                short_price = float(ticker['sell'])
+                avg_long_price = self._get_last_n_long_avg_price(2, 10)
+                holding = float(self._funds['free'][self._coin_name])
+
+                kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
+                signal = self.strategy.execute(kline, **kwargs)
+
+                if signal != "":
+                    self._logger.log(signal)
+        except:
+            tb = traceback.format_exc()
+            self._logger.log(tb)
+    #-----------------------------------------------------------------------------------------------
 
     def _update_user_info(self):
         '''

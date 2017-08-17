@@ -5,6 +5,8 @@
 """
 url_cn = "www.okcoin.cn"
 url_com = "www.okcoin.com"
+log_path = "c:\logs"
+signal_test_log_path = "c:\logs\stlogs"
 
 config_3min = {
     "stop_profit_ratio": 0.025,

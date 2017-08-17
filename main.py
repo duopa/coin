@@ -27,6 +27,8 @@ def run():
     print("205 : EMA Cross with MACD-5min")
     strategy_selected = input(">>>")
 
+    is_debug = input("Is debug? Y/N>>>")
+
     config = {}
     time_type = "3min"
     strategy = None
@@ -53,7 +55,10 @@ def run():
     okcoin = OkCoin(symbol, time_type, 10)
     okcoin.config = config
     okcoin.strategy = strategy
-    okcoin.run()
+    if str(is_debug).upper() == 'Y':
+        okcoin.run_signal_test()
+    else:
+        okcoin.run()
 
 if __name__ == "__main__":
     run()
