@@ -67,6 +67,11 @@ class StrategyBase:
         #dif, dea, diff - dea?
         return talib.MACD(close, fastperiod=12, slowperiod=26, signalperiod=9)
 
+    def _get_ema(self, periods):
+        close_list = self._get_close_from_kline()
+        close = numpy.array(close_list)
+        return talib.EMA(close, periods)
+
     def _get_close_from_kline(self):
         close = []
         for arr in self._kline:

@@ -21,7 +21,7 @@ class OkCoin:
     '''
     OkCoin
     '''
-    def __init__(self, symbol, time_type, frequency):
+    def __init__(self, strategy, symbol, time_type, frequency):
         '''
         : symbol: btc_cny, ltc_cny, eth_cny
         : time_type: 1min, 3min, 5min...
@@ -42,19 +42,28 @@ class OkCoin:
         self._config = None
         self._last_trade_time = datetime.now() - timedelta(days=1)
         self._mutex = threading.Lock()
-        self._macd_strategy = None
+        self._strategy = strategy
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
         self._logger = Logger('c:/logs', symbol)
 
+        """
         if self._type == '3min':
             self._config = config_3min
-            self._macd_strategy = MacdStrategy(**self._config)
+            self._strategy = MacdStrategy(**self._config)
         elif self._type == '5min':
             self._config = config_5min
-            self._macd_strategy = MacdStrategy(**self._config)
+            self._strategy = MacdStrategy(**self._config)
         else:
             self._config = config_3min
-            self._macd_strategy = MacdStrategy(**self._config)
+            self._strategy = MacdStrategy(**self._config)
+        """
+    @property
+    def config(self):
+        return self._config
+
+    @config.setter
+    def config(self, value):
+        self._config = value
 
     def run(self):
         '''
@@ -93,7 +102,7 @@ class OkCoin:
                 holding = float(self._funds['free'][self._coin_name])
 
                 kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
-                signal = self._macd_strategy.execute(kline, **kwargs)
+                signal = self._strategy.execute(kline, **kwargs)
 
                 # stop loss first priority
                 if signal == 'sl':
