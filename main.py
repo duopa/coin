@@ -50,8 +50,9 @@ def run():
         print("Invalid strategy selected {0}".format(strategy_selected))
         return
 
-    okcoin = OkCoin(strategy, 'eth_cny', time_type, 10)
+    okcoin = OkCoin(symbol, time_type, 10)
     okcoin.config = config
+    okcoin.strategy = strategy
     okcoin.run()
 
 if __name__ == "__main__":

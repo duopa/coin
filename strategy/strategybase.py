@@ -9,7 +9,7 @@ class StrategyBase:
     def __init__(self, **config):
         self._config = config
         self._stop_loss_count_down = 0
-        self._kline = []
+        self._kline = []    
 
     def execute(self, kline, **kwargs):
         '''

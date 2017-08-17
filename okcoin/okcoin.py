@@ -21,7 +21,7 @@ class OkCoin:
     '''
     OkCoin
     '''
-    def __init__(self, strategy, symbol, time_type, frequency):
+    def __init__(self, symbol, time_type, frequency):
         '''
         : symbol: btc_cny, ltc_cny, eth_cny
         : time_type: 1min, 3min, 5min...
@@ -42,28 +42,31 @@ class OkCoin:
         self._config = None
         self._last_trade_time = datetime.now() - timedelta(days=1)
         self._mutex = threading.Lock()
-        self._strategy = strategy
+        self._strategy = None
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
         self._logger = Logger('c:/logs', symbol)
+    #------properties------
+    @property
+    def symbol(self):
+        return self._symbol
+    @symbol.setter
+    def symbol(self, value):
+        self._symbol = value
 
-        """
-        if self._type == '3min':
-            self._config = config_3min
-            self._strategy = MacdStrategy(**self._config)
-        elif self._type == '5min':
-            self._config = config_5min
-            self._strategy = MacdStrategy(**self._config)
-        else:
-            self._config = config_3min
-            self._strategy = MacdStrategy(**self._config)
-        """
     @property
     def config(self):
         return self._config
-
     @config.setter
     def config(self, value):
         self._config = value
+    
+    @property
+    def strategy(self):
+        return self._strategy
+    @strategy.setter
+    def strategy(self, value):
+        self._strategy = value
+    #----------------------
 
     def run(self):
         '''
@@ -71,10 +74,10 @@ class OkCoin:
         '''
         try:
             print('---------------CONFIG---------------')
-            print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self._config['stop_profit_ratio']})
-            print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self._config['stop_loss_ratio']})
-            print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self._config['short_ratio']})
-            print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self._config['coin_most_hold_ratio']})
+            print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self.config['stop_profit_ratio']})
+            print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self.config['stop_loss_ratio']})
+            print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self.config['short_ratio']})
+            print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self.config['coin_most_hold_ratio']})
             print('')
             self._logger.log('---------------start running---------------')
             self._update_user_info()
@@ -88,6 +91,9 @@ class OkCoin:
             self._logger.log(tb)
 
     def process(self):
+        """
+        :
+        """
         try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('======>>>process %(symbol)s start at %(now)s ...' %{'symbol': self._symbol, 'now':now})
@@ -102,7 +108,7 @@ class OkCoin:
                 holding = float(self._funds['free'][self._coin_name])
 
                 kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
-                signal = self._strategy.execute(kline, **kwargs)
+                signal = self.strategy.execute(kline, **kwargs)
 
                 # stop loss first priority
                 if signal == 'sl':
@@ -176,7 +182,7 @@ class OkCoin:
         trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'sell', price, amount))
         if trade_result['result']:
             #:increase short_occurs
-            short_occurs_len = len(self._config['short_ratio'])
+            short_occurs_len = len(self.config['short_ratio'])
             self._short_occurs = self._short_occurs + 1 if self._short_occurs < (short_occurs_len -1) else self._short_occurs
             self._last_short_order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
@@ -199,7 +205,7 @@ class OkCoin:
             amount = afs
         else:
             #short part of all, doing this is in case of price keep going up after a short break; is this a good strategy or not need to be test
-            amount = afs * self._config['short_ratio'][self._short_occurs]
+            amount = afs * self.config['short_ratio'][self._short_occurs]
             if amount < lowest_unit:
                 #amount = afs
                 amount = lowest_unit
@@ -214,14 +220,14 @@ class OkCoin:
         free_money = float(self._funds['free']['cny'])
         holding = float(self._funds['free'][self._coin_name])
         #如果某coin占总资金超过20%(可调整),停止买入此coin
-        most_hold_percent = self._config['coin_most_hold_ratio']
+        most_hold_percent = self.config['coin_most_hold_ratio']
         if holding * price >= total * most_hold_percent:
             msg = '{coin_name} poisition excess {most_hold_percent}% money'.format(**{'coin_name':self._coin_name, 'most_hold_percent': most_hold_percent * 100})
             self._logger.log(msg)
             return 0
 
         lowest_unit, rnd = self._trade_config()
-        purchase = total * self._config['long_total_ratio']
+        purchase = total * self.config['long_total_ratio']
         amount = 0
         if free_money >= purchase:
             amount = round(purchase / price, rnd)
