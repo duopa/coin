@@ -96,7 +96,7 @@ class OkCoin:
         """
         try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print('======>>>process %(symbol)s start at %(now)s ...' %{'symbol': self._symbol, 'now':now})
+            print('======>>>process %(symbol)s %(type)s start at %(now)s ...' %{'symbol': self._symbol, 'type': self._type, 'now':now})
             with self._mutex:  # make sure only one thread is modifying counter at a given time
                 kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
                 self._ticker = self._okcoin_spot.ticker(self._symbol)
