@@ -38,7 +38,7 @@ class MacdStrategy(StrategyBase):
         and self._is_slope_changing_to_positive() \
         and self._is_hist_under_zero_back_n_periods(8) \
         and not self._is_hist_close_to_zero_for_n_periods() \
-        and (self._is_long_price_under_highest_price_percent2(long_price) or self._is_dea_under_zero_back_n_periods(long_price)) \
+        and (self._is_long_price_under_highest_price_percent2(long_price) or self._is_long_price_under_highest_price_percent(long_price)) \
         and (self._is_dif_under_dea_back_n_periods() or self._is_lowest_hist() or self._is_pre_dif_dea_far_enough())
 
         #volumn_signal = self._is_volumn_up_sharply(kline, 20, 30)
