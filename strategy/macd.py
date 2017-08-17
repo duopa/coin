@@ -284,7 +284,7 @@ class MacdStrategy(StrategyBase):
                 #: return True run into problem: reason: ltc 3min long at 2017-08-08 13:48:24
                 #return False
             else:
-                percent = self._config["long_price_down_ratio"]
+                percent = self._config["long_price_down_ratio"] + 0.01
                 diff = highest_price * (1 - percent)
                 if long_price <= diff:
                     return True
