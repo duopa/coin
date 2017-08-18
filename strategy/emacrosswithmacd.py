@@ -24,8 +24,8 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         self._ema_slow = self._get_ema(self._ema_slow_periods)
         return super().execute(kline, **kwargs)
 
-    def _should_stop_loss(self, last, avg_long_price, holding):
-        return super()._should_stop_loss(last, avg_long_price, holding)
+    def _should_stop_loss(self, last, avg_history_price, holding):
+        return super()._should_stop_loss(last, avg_history_price, holding)
 
     def _long_signal(self, long_price):
         '''
@@ -72,8 +72,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         has_crossed = self._ema_quick[-1] < self._ema_slow[-1] \
         and self._ema_quick[-2] >= self._ema_slow[-2] \
         and self._ema_quick[-3] > self._ema_slow[-3]
-        is_on_ranging = self._is_on_ranging()
-        if has_crossed and not is_on_ranging and self._macdhist[-1] < 0:
+        if has_crossed and self._macdhist[-1] < 0:
             return True
         else:
             return False

@@ -75,13 +75,7 @@ class OkCoin:
         try:
             self._logger = Logger(log_path, self.symbol)
             print('---------------CONFIG---------------')
-            '''
-            print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self.config['stop_profit_ratio']})
-            print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self.config['stop_loss_ratio']})
-            print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self.config['short_ratio']})
-            print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self.config['coin_most_hold_ratio']})
-            '''
-            for k,v in self.config.items():
+            for k, v in self.config.items():
                 print("\t{0}: {1}".format(k, v))
             print('')
             self._logger.log('---------------start running---------------')
@@ -99,7 +93,7 @@ class OkCoin:
         """
         :
         """
-        try:            
+        try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('======>>>process %(symbol)s %(type)s start at %(now)s ...' %{'symbol': self._symbol, 'type': self._type, 'now':now})
             with self._mutex:  # make sure only one thread is modifying counter at a given time
@@ -110,14 +104,14 @@ class OkCoin:
                 higt = float(ticker['high'])
                 long_price = float(ticker['buy'])
                 short_price = float(ticker['sell'])
-                avg_long_price = self._get_last_n_long_avg_price(2, 10)
+                avg_history_price = self._get_last_n_long_avg_price(2, 10)
                 holding = float(self._funds['free'][self._coin_name])
 
                 kwargs = {
                     "last": last, 
                     "long_price": long_price, 
                     "short_price": short_price, 
-                    "avg_long_price": avg_long_price, 
+                    "avg_history_price": avg_history_price, 
                     "highest_price": higt,
                     "holding":holding
                 }
@@ -137,8 +131,11 @@ class OkCoin:
                 elif signal == 's':
                     short_price = short_price - 0.01
                     self._short(short_price)
-                    self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})
-                print('{0}\n'.format(ticker))
+                    self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_history_price})
+                print("------Parameters------")
+                for k, v in kwargs.items():
+                    print("\t{0}: {1}".format(k, v))
+                #print('{0}\n'.format(ticker))
         except:
             tb = traceback.format_exc()
             self._logger.log(tb)
