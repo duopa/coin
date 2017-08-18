@@ -74,16 +74,7 @@ class MacdStrategy(StrategyBase):
         and (isdifabovedeabacknperiods or ishighesthist or ispredifdeafarenough)
     #-----------------------------------------------------------------------------------------------
     def _should_stop_loss(self, last, avg_long_price, holding):
-        '''
-        : stop loss signal
-        '''
-        stop_loss_ratio = self._config['stop_loss_ratio']
-        if holding < 0.01:
-            return False
-        if last <= (avg_long_price * (1- stop_loss_ratio)):
-            self._stop_loss_count_down = self._config['stop_loss_count_down']
-            return True
-        return False
+        return super()._should_stop_loss(last, avg_long_price, holding)
     #-----------------------------------------------------------------------------------------------
     def _is_slope_changing_to_positive(self):
         '''
@@ -351,18 +342,6 @@ class MacdStrategy(StrategyBase):
         else:
             return False
     #----------------------------------------------------------------------------------------------
-    def _is_reasonalbe_short_price(self, short_price, avg_long_price):
-        '''
-        : 有一个合理的涨幅才卖, 至少能cover交易费用0.4%
-        '''
-        if short_price <= avg_long_price:
-            return False
-        stop_profit_ratio = self._config['stop_profit_ratio']
-        if short_price < avg_long_price * (1 + stop_profit_ratio):
-            return False
-        else:
-            return True
-    #----------------------------------------------------------------------------------------------
     def _is_hist_close_to_zero_for_n_periods(self, periods=9):
         '''
         : if avg hist almost close to zero for long time(the hist bar hight is below 15% of highest bar hight), do NOT long
@@ -413,21 +392,3 @@ class MacdStrategy(StrategyBase):
         '''
         high_arr = list(map(lambda x: x[4], latest_kline))
         return max(high_arr), numpy.argmax(high_arr)
-
-    def _get_last_ema_dead_cross_avg_price(self, quick_periods, slow_periods):
-        '''
-        : return the slow ema value and index when EMA dead cross
-        '''
-        close_list = self._get_close_from_kline()
-        close = numpy.array(close_list)
-        ema_quick = talib.EMA(close, quick_periods)
-        ema_slow = talib.EMA(close, slow_periods)
-        index = -1
-        for i in range(-1, -len(ema_slow), -1):
-            if ema_quick[i] < ema_slow[i]:
-                continue
-            else:
-                index = i
-                break
-
-        return ema_slow[index], index

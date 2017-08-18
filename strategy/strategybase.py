@@ -83,3 +83,21 @@ class StrategyBase:
         for arr in self._kline:
             opens.append(arr[1])
         return opens
+
+    def _get_last_ema_dead_cross_avg_price(self, quick_periods, slow_periods):
+        '''
+        : return the slow ema value and index when EMA dead cross
+        '''
+        close_list = self._get_close_from_kline()
+        close = numpy.array(close_list)
+        ema_quick = talib.EMA(close, quick_periods)
+        ema_slow = talib.EMA(close, slow_periods)
+        index = -1
+        for i in range(-1, -len(ema_slow), -1):
+            if ema_quick[i] < ema_slow[i]:
+                continue
+            else:
+                index = i
+                break
+
+        return ema_slow[index], index

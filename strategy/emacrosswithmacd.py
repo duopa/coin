@@ -28,8 +28,12 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         return super()._should_stop_loss(last, avg_long_price, holding)
 
     def _long_signal(self, long_price):
+        '''
+        : macd_long_signal as first long point, macd slope change always before ema corss, this is try to long at low price
+        '''
+        macd_long_signal = self._is_slope_changing_to_positive() and self._is_long_price_under_highest_price_percent(long_price)
         is_golden_cross = self._is_ema_golden_cross()
-        if is_golden_cross:
+        if macd_long_signal or is_golden_cross:
             return True
         else:
             return False
@@ -68,8 +72,49 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         slow_arr = self._ema_slow[-arr_len:]
         quick_arr = self._ema_quick[-arr_len:]
         slow_avg = numpy.average(slow_arr)
+        slow_max = numpy.max(slow_arr)
+        slow_min = numpy.min(slow_arr)
+        if (slow_max - slow_min) / slow_avg < 0.01:
+            return True
+        else:
+            return False
+        '''
         quick_avg = numpy.average(quick_arr)
         if abs(slow_avg - quick_avg) / slow_avg < 0.001:
             return True
         else:
             return False
+        '''
+
+    def _is_slope_changing_to_positive(self):
+        '''
+        : whether slope of dif line head up
+        '''
+        if len(self._macd) < 12:
+            return False
+        temp = self._macd[-12:]
+        index = numpy.argmin(temp)
+        if len(temp) - index == 3 and self._macd[-1] > self._macd[-2]:#最低点在倒数第三个表面方向向上(可能要调整)
+            return True
+        else:
+            return False
+
+    def _is_long_price_under_highest_price_percent(self, long_price):
+        '''
+        : use EMA slow as highest price instead, this is out of EMA avg price make more sense than absolute highest price
+        '''
+        highest_price, index_negtive = self._get_last_ema_dead_cross_avg_price(5, 30)
+        # make sure the distance is enough, or it will long too early
+        if abs(index_negtive) < (self._ema_quick_periods + self._ema_slow_periods): # default 30 = 9 + 21
+            return False
+        else:
+            #当long_price >= highest_price时,认为是在创新高,买入
+            if long_price >= highest_price:
+                return True
+            else:
+                percent = self._config["long_price_down_ratio"]
+                diff = highest_price * (1 - percent)
+                if long_price <= diff:
+                    return True
+                else:
+                    return False
