@@ -51,14 +51,14 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         has_crossed = self._ema_quick[-1] > self._ema_slow[-1] \
         and self._ema_quick[-2] >= self._ema_slow[-2] \
         and self._ema_quick[-3] < self._ema_slow[-3]
-        check_periods = self._ema_quick_periods + self._ema_slow_periods
-        i = 0
+        check_periods = self._ema_slow_periods
+        i = -3
         if has_crossed:
-            while i <= check_periods:
+            while i >= -check_periods:
                 if self._ema_quick[i] < self._ema_slow[i]:
-                    i += 1
+                    i -= 1
                     continue
-                elif self._ema_quick[i-1] >= self._ema_slow[i-1] \
+                elif self._ema_quick[i-1] > self._ema_slow[i-1] \
                     and self._ema_quick[i-2] > self._ema_slow[i-2] \
                     and self._ema_quick[i-3] > self._ema_slow[i-3]:
                     return False
