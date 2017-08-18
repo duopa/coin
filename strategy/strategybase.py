@@ -12,6 +12,10 @@ class StrategyBase:
         self._kline = []
         self._params = {}
 
+    @property
+    def name(self):
+        return ''
+
     def execute(self, kline, **kwargs):
         '''
         : execute strategy

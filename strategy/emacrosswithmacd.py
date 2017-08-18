@@ -16,6 +16,10 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         self._macdsignal = []
         self._macdhist = []
 
+    @property
+    def name(self):
+        return "EmaCrossWithMacd"
+    
     def execute(self, kline, **kwargs):
         self._kline = kline
         #dif, dea, diff - dea?

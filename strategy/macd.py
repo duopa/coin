@@ -16,6 +16,10 @@ class MacdStrategy(StrategyBase):
         self._macd = []
         self._macdsignal = []
         self._macdhist = []
+    
+    @property
+    def name(self):
+        return "MACD"
     #-----------------------------------------------------------------------------------------------
     #def execute(self, kline, last, long_price, avg_long_price, holding):
     def  execute(self, kline, **kwargs):
