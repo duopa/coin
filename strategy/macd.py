@@ -300,8 +300,8 @@ class MacdStrategy(StrategyBase):
                 percent = self._config["long_price_down_ratio"]
                 diff = highest_price * (1 - percent)
                 #: if negtive hist under zero enough
-                ishuzbnp = self._is_hist_under_zero_back_n_periods(30)
-                if long_price <= diff or ishuzbnp:
+                #ishuzbnp = self._is_hist_under_zero_back_n_periods(30)
+                if long_price <= diff:
                     return True
                 else:
                     return False
