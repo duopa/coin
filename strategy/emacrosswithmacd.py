@@ -31,8 +31,8 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         '''
         : macd_long_signal as first long point, macd slope change always before ema corss, this is try to long at low price
         '''
-        macd_long_signal = self._is_slope_changing_to_positive() and self._is_long_price_under_highest_price_percent(long_price)
-        is_golden_cross = self._is_ema_golden_cross()
+        macd_long_signal = self._is_slope_changing_to_positive() and self._is_long_price_under_last_dead_cross_price_percent(long_price)
+        is_golden_cross = self._is_ema_golden_cross() and self._is_long_price_under_highest_price_percent(long_price)
         if macd_long_signal or is_golden_cross:
             return True
         else:
@@ -85,7 +85,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         slow_avg = numpy.average(slow_arr)
         slow_max = numpy.max(slow_arr)
         slow_min = numpy.min(slow_arr)
-        if (slow_max - slow_min) / slow_avg < 0.01:
+        if (slow_max - slow_min) / slow_avg <= 0.006:
             return True
         else:
             return False
@@ -110,7 +110,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         else:
             return False
 
-    def _is_long_price_under_highest_price_percent(self, long_price):
+    def _is_long_price_under_last_dead_cross_price_percent(self, long_price):
         '''
         : use EMA slow as highest price instead, this is out of EMA avg price make more sense than absolute highest price
         '''
@@ -129,3 +129,12 @@ class EmaCrossWithMacdStrategy(StrategyBase):
                     return True
                 else:
                     return False
+
+    def _is_long_price_under_highest_price_percent(self, long_price):
+        highest_price = self._params['highest_price']
+        percent = self._config["long_price_down_ratio"]
+        diff = highest_price * (1 - percent)
+        if long_price <= diff:
+            return True
+        else:
+            return False

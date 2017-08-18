@@ -9,12 +9,14 @@ class StrategyBase:
     def __init__(self, **config):
         self._config = config
         self._stop_loss_count_down = 0
-        self._kline = []    
+        self._kline = []
+        self._params = {}
 
     def execute(self, kline, **kwargs):
         '''
         : execute strategy
-        '''        
+        '''
+        self._params = kwargs
         last = kwargs['last']
         long_price = kwargs['long_price']
         short_price = kwargs['short_price']

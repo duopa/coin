@@ -75,10 +75,14 @@ class OkCoin:
         try:
             self._logger = Logger(log_path, self.symbol)
             print('---------------CONFIG---------------')
+            '''
             print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self.config['stop_profit_ratio']})
             print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self.config['stop_loss_ratio']})
             print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self.config['short_ratio']})
             print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self.config['coin_most_hold_ratio']})
+            '''
+            for k,v in self.config.items():
+                print("\t{0}: {1}".format(k, v))
             print('')
             self._logger.log('---------------start running---------------')
             self._update_user_info()
@@ -103,12 +107,20 @@ class OkCoin:
                 self._ticker = self._okcoin_spot.ticker(self._symbol)
                 ticker = self._ticker['ticker']
                 last = float(ticker['last'])
+                higt = float(ticker['high'])
                 long_price = float(ticker['buy'])
                 short_price = float(ticker['sell'])
                 avg_long_price = self._get_last_n_long_avg_price(2, 10)
                 holding = float(self._funds['free'][self._coin_name])
 
-                kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
+                kwargs = {
+                    "last": last, 
+                    "long_price": long_price, 
+                    "short_price": short_price, 
+                    "avg_long_price": avg_long_price, 
+                    "highest_price": higt,
+                    "holding":holding
+                }
                 signal = self.strategy.execute(kline, **kwargs)
 
                 # stop loss first priority
