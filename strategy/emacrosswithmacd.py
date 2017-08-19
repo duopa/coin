@@ -19,7 +19,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
     @property
     def name(self):
         return "EmaCrossWithMacd"
-    
+
     def execute(self, kline, **kwargs):
         self._kline = kline
         #dif, dea, diff - dea?
@@ -73,6 +73,14 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             return False
 
     def _is_ema_dead_cross(self):
+        """
+        """
+        #: if quick from top approching slow enough, then deem it's dead cross
+        approch_a = (self._ema_quick[-1] - self._ema_slow[-1]) / self._ema_slow[-1]
+        approch_b = (self._ema_quick[-2] - self._ema_slow[-2]) / self._ema_slow[-2]
+        if approch_a < 0.001 and approch_b < 0.001:
+            return True
+
         has_crossed = self._ema_quick[-1] < self._ema_slow[-1] \
         and self._ema_quick[-2] >= self._ema_slow[-2] \
         and self._ema_quick[-3] > self._ema_slow[-3]
