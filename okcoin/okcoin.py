@@ -149,10 +149,8 @@ class OkCoin:
         try:
             self._logger = Logger(signal_test_log_path, self.symbol)
             print('---------------CONFIG---------------')
-            print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self.config['stop_profit_ratio']})
-            print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self.config['stop_loss_ratio']})
-            print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self.config['short_ratio']})
-            print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self.config['coin_most_hold_ratio']})
+            for k, v in self.config.items():
+                print("\t{0}: {1}".format(k, v))
             print('')
             self._logger.log('---------------start running---------------')
             self._update_user_info()
