@@ -6,6 +6,9 @@
 import ast
 import json
 import time
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.realpath(os.path.dirname(__file__)), os.pardir)))
 from okcoin.OkcoinSpotAPI import OKCoinSpot
 from okcoin.OkcoinFutureAPI import OKCoinFuture
 from okcoin.key import *
@@ -22,6 +25,10 @@ okcoinSpot = OKCoinSpot(okcoinRESTURL,apikey,secretkey)
 
 #期货API
 okcoinFuture = OKCoinFuture(okcoinRESTURL,apikey,secretkey)
+
+print(u'Order Info')
+order = json.loads(okcoinSpot.order_info('ltc_cny', 447920579))
+print(order['orders'])
 
 #print (u' 现货行情 ')
 #ticker  = okcoinSpot.ticker('btc_usd')

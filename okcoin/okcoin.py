@@ -36,8 +36,6 @@ class OkCoin:
         self._frequency = frequency
         self._funds = {}
         self._ticker = {}
-        self._last_long_order_id = 0
-        self._last_short_order_id = 0
         self._short_occurs = 0
         self._config = None
         self._last_trade_time = datetime.now() - timedelta(days=1)
@@ -214,9 +212,10 @@ class OkCoin:
         if trade_result['result']:
             #:reset short_occurs, it's better to check this long trade really filled
             self._short_occurs = 0
-            self._last_long_order_id = trade_result['order_id']
+            order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
-            self._logger.log('long order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
+            self._logger.log('long order %(orderid)s placed successfully' %{'orderid': order_id})
+            self._cancel_hanging_order(order_id)
         else:
             msg = '{0}'.format(trade_result)
             print('\t' + msg)
@@ -245,12 +244,35 @@ class OkCoin:
             #:increase short_occurs
             short_occurs_len = len(self.config['short_ratio'])
             self._short_occurs = self._short_occurs + 1 if self._short_occurs < (short_occurs_len -1) else self._short_occurs
-            self._last_short_order_id = trade_result['order_id']
+            order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
-            self._logger.log('short order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
+            self._logger.log('short order %(orderid)s placed successfully' %{'orderid': order_id})
+            self._cancel_hanging_order(order_id)
         else:
             msg = '{0}'.format(trade_result)
             print('\t' + msg)
+            self._logger.log(msg)
+
+    def _cancel_hanging_order(self, order_id):
+        timer = threading.Timer(5, self._do_cancel_hanging_order, (order_id))
+        timer.daemon = True
+        timer.start()
+
+    def _do_cancel_hanging_order(self, order_id):
+        order_result = json.loads(self._okcoin_spot.order_info(self.symbol, order_id))
+        if not order_result['result']:
+            return
+        else:
+            orders = order_result['orders']
+            if not orders or orders[0]['status'] != 0: #0: not filled
+                return
+
+        result = json.loads(self._okcoin_spot.cancel_order(self.symbol, order_id))
+        if result['result']:
+            msg = 'order {0} cancelled successfully'.format(order_id)
+            self._logger.log(msg)
+        else:
+            msg = 'order {0} cancelled FAILED \n{1}'.format(order_id, result)
             self._logger.log(msg)
 
     def _amount_to_short(self, stop_loss=False):
