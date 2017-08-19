@@ -34,7 +34,7 @@ eamcrosswithmacd_config_3min = {
     "stop_profit_ratio": 0.01,
     "stop_loss_ratio": 0.045,
     "short_ratio": [0.6, 0.5, 0.5],
-    "coin_most_hold_ratio": 1,
+    "coin_most_hold_ratio": 0.3,
     "long_total_ratio": 0.2,
     "long_price_down_ratio": 0.03,
     "stop_loss_count_down": 1,
