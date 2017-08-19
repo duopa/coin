@@ -213,7 +213,7 @@ class OkCoin:
             #:reset short_occurs, it's better to check this long trade really filled
             self._short_occurs = 0
             order_id = trade_result['order_id']
-            #self._last_trade_time = datetime.now()
+            self._last_trade_time = datetime.now()
             self._logger.log('long order %(orderid)s placed successfully' %{'orderid': order_id})
             self._check_order_status(order_id)
         else:
@@ -245,7 +245,7 @@ class OkCoin:
             short_occurs_len = len(self.config['short_ratio'])
             self._short_occurs = self._short_occurs + 1 if self._short_occurs < (short_occurs_len -1) else self._short_occurs
             order_id = trade_result['order_id']
-            #self._last_trade_time = datetime.now()
+            self._last_trade_time = datetime.now()
             self._logger.log('short order %(orderid)s placed successfully' %{'orderid': order_id})
             self._check_order_status(order_id)
         else:
@@ -261,16 +261,15 @@ class OkCoin:
     def _do_check_order_status(self, order_id):
         order_result = json.loads(self._okcoin_spot.order_info(self.symbol, order_id))
         if not order_result['result']:
-            self._last_trade_time = datetime.now()
             return
         else:
             orders = order_result['orders']
             if not orders or orders[0]['status'] != 0: #0: not filled
-                self._last_trade_time = datetime.now()
                 return
 
         result = json.loads(self._okcoin_spot.cancel_order(self.symbol, order_id))
         if result['result']:
+            self._last_trade_time = datetime.now() - timedelta(days=1)
             msg = 'order {0} cancelled successfully'.format(order_id)
             self._logger.log(msg)
         else:
