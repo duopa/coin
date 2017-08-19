@@ -293,15 +293,14 @@ class OkCoin:
         purchase = total * self.config['long_total_ratio']
         amount = 0
         if free_money >= purchase:
-            amount = round(purchase / price, rnd)
+            amount = purchase / price #round(purchase / price, rnd)
         else:
-            amount = round(free_money / price, rnd)
+            amount = free_money / price #round(free_money / price, rnd)
 
         if amount < lowest_unit:
             amount = 0
 
-        return amount
-
+        return math.trunc(amount * 1000)/1000
     #------------------------------------------------------------------------------------------------
     def _get_last_n_long_avg_price(self, nlong, historycount):
         '''
