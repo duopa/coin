@@ -254,7 +254,7 @@ class OkCoin:
             self._logger.log(msg)
 
     def _cancel_hanging_order(self, order_id):
-        timer = threading.Timer(5, self._do_cancel_hanging_order, (order_id))
+        timer = threading.Timer(5, self._do_cancel_hanging_order, [order_id])
         timer.daemon = True
         timer.start()
 
