@@ -76,11 +76,13 @@ class EmaCrossWithMacdStrategy(StrategyBase):
     def _is_ema_dead_cross(self):
         """
         """
+        is_on_ranging = self._is_on_ranging()
         #: if quick from top approching slow enough, then deem it's dead cross
         approch_a = (self._ema_quick[-1] - self._ema_slow[-1]) / self._ema_slow[-1]
         approch_b = (self._ema_quick[-2] - self._ema_slow[-2]) / self._ema_slow[-2]
         if math.floor(self._ema_quick[-2]) > math.floor(self._ema_quick[-1]) \
-        and 0 < approch_a < 0.001 and 0 < approch_b < 0.001:
+        and 0 < approch_a < 0.001 and 0 < approch_b < 0.001 \
+        and not is_on_ranging:
             return True
 
         has_crossed = self._ema_quick[-1] < self._ema_slow[-1] \
