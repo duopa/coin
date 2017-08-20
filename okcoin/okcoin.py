@@ -95,47 +95,47 @@ class OkCoin:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('======>>>process %(symbol)s %(type)s %(strategy)s start at %(now)s ...' 
             %{'symbol': self._symbol, 'type': self._type, 'strategy': self.strategy.name, 'now':now})
-            with self._mutex:  # make sure only one thread is modifying counter at a given time
-                kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
-                self._ticker = self._okcoin_spot.ticker(self._symbol)
-                ticker = self._ticker['ticker']
-                last = float(ticker['last'])
-                higt = float(ticker['high'])
-                long_price = float(ticker['buy'])
-                short_price = float(ticker['sell'])
-                avg_history_price = self._get_last_n_long_avg_price(2, 10)
-                holding = float(self._funds['free'][self._coin_name])
+            #with self._mutex:  # make sure only one thread is modifying counter at a given time
+            kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
+            self._ticker = self._okcoin_spot.ticker(self._symbol)
+            ticker = self._ticker['ticker']
+            last = float(ticker['last'])
+            higt = float(ticker['high'])
+            long_price = float(ticker['buy'])
+            short_price = float(ticker['sell'])
+            avg_history_price = self._get_last_n_long_avg_price(2, 10)
+            holding = float(self._funds['free'][self._coin_name])
 
-                kwargs = {
-                    "last": last, 
-                    "long_price": long_price, 
-                    "short_price": short_price, 
-                    "avg_history_price": avg_history_price, 
-                    "highest_price": higt,
-                    "holding":holding
-                }
-                signal = self.strategy.execute(kline, **kwargs)
+            kwargs = {
+                "last": last, 
+                "long_price": long_price, 
+                "short_price": short_price, 
+                "avg_history_price": avg_history_price, 
+                "highest_price": higt,
+                "holding":holding
+            }
+            signal = self.strategy.execute(kline, **kwargs)
 
-                # stop loss first priority
-                if signal == 'sl':
-                    #低于当前卖价卖出
-                    short_price = short_price - 0.01
-                    self._stop_loss(short_price)
+            # stop loss first priority
+            if signal == 'sl':
+                #低于当前卖价卖出
+                short_price = short_price - 0.01
+                self._stop_loss(short_price)
 
-                if self._has_traded_in_near_periods_already(9):
-                    print('\tlast trade time {0}'.format(self._last_trade_time.strftime('%Y-%m-%d %H:%M%:S')))
-                    return
+            if self._has_traded_in_near_periods_already(9):
+                print('\tlast trade time {0}'.format(self._last_trade_time.strftime('%Y-%m-%d %H:%M%:S')))
+                return
 
-                if signal == 'l':
-                    self._long(long_price)
-                elif signal == 's':
-                    short_price = short_price - 0.01
-                    self._short(short_price)
-                    self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_history_price})
-                print("------Parameters------")
-                for k, v in kwargs.items():
-                    print("\t{0}: {1}".format(k, v))
-                #print('{0}\n'.format(ticker))
+            if signal == 'l':
+                self._long(long_price)
+            elif signal == 's':
+                short_price = short_price - 0.01
+                self._short(short_price)
+                self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_history_price})
+            print("------Parameters------")
+            for k, v in kwargs.items():
+                print("\t{0}: {1}".format(k, v))
+            #print('{0}\n'.format(ticker))
         except:
             tb = traceback.format_exc()
             self._logger.log(tb)
