@@ -36,9 +36,10 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         '''
         : macd_long_signal as first long point, macd slope change always before ema corss, this is try to long at low price
         '''
+        macd_golden_cross = self._is_macd_golden_cross()
         macd_long_signal = self._is_slope_changing_to_positive() and self._is_long_price_under_last_dead_cross_price_percent(long_price)
-        is_golden_cross = self._is_ema_golden_cross() and self._is_long_price_under_highest_price_percent(long_price)
-        if macd_long_signal or is_golden_cross:
+        ema_golden_cross = self._is_ema_golden_cross() and self._is_long_price_under_highest_price_percent(long_price)
+        if macd_golden_cross or macd_long_signal or ema_golden_cross:
             return True
         else:
             return False
@@ -92,7 +93,34 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             return True
         else:
             return False
-
+    #-----------------------------------------------------------------------------------------------
+    def _is_macd_golden_cross(self):
+        """
+        : 1: quick cross slow from bottom to above
+        : 2: the dea must below the closest negative hist
+        : 3: the quick must below the slow at least 21 periods
+        """
+        has_crossed = self._macd[-1] < 0 and self._macdsignal[-1] < 0 \
+        and self._macd[-1] > self._macdsignal[-1] \
+        and self._macd[-2] > self._macdsignal[-2] \
+        and self._macd[-3] < self._macdsignal[-3]
+        if has_crossed:
+            min_hist = numpy.min(self._macdhist[-40:])
+            #make sure the last dea smaller than the min hist bar
+            if min_hist >= 0 or self._macdsignal[-1] >= min_hist:
+                return False
+            else:
+                #check if diff was under dea for last at least 21 periods
+                i = -3
+                while i >= -23:
+                    if self._macd[i] < self._macdsignal[i]:
+                        i -= 1
+                        continue
+                    else:
+                        return False
+                return True
+        return False
+    #-----------------------------------------------------------------------------------------------
     def _is_on_ranging(self):
         arr_len = self._ema_quick_periods + self._ema_slow_periods
         slow_arr = self._ema_slow[-arr_len:]
