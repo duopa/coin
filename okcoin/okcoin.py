@@ -43,6 +43,7 @@ class OkCoin:
         self._strategy = None
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
         self._logger = None #Logger('c:/logs', symbol)
+        self._err_logger = None
     #------properties------
     @property
     def symbol(self):
@@ -72,6 +73,7 @@ class OkCoin:
         '''
         try:
             self._logger = Logger(log_path, self.symbol)
+            self._err_logger = Logger(log_path, self.symbol + '_err')
             print('---------------CONFIG---------------')
             for k, v in self.config.items():
                 print("\t{0}: {1}".format(k, v))
@@ -85,7 +87,7 @@ class OkCoin:
                 time.sleep(self._frequency)
         except:
             tb = traceback.format_exc()
-            self._logger.log(tb)
+            self._err_logger.log(tb)
 
     def process(self):
         """
@@ -140,7 +142,7 @@ class OkCoin:
             #print('{0}\n'.format(ticker))
         except:
             tb = traceback.format_exc()
-            self._logger.log(tb)
+            self._err_logger.log(tb)
 
     #-----------------------------------------------------------------------------------------------
     def run_signal_test(self):
