@@ -101,18 +101,20 @@ class OkCoin:
             ticker = self._ticker['ticker']
             last = float(ticker['last'])
             higt = float(ticker['high'])
+            low = float(ticker['low'])
             long_price = float(ticker['buy'])
             short_price = float(ticker['sell'])
             avg_history_price = self._get_last_n_long_avg_price(2, 10)
             holding = float(self._funds['free'][self._coin_name])
 
             kwargs = {
-                "last": last, 
-                "long_price": long_price, 
-                "short_price": short_price, 
-                "avg_history_price": avg_history_price, 
+                "last": last,
                 "highest_price": higt,
-                "holding":holding
+                "lowest_price": low,
+                "holding":holding,
+                "long_price": long_price,
+                "short_price": short_price,
+                "avg_history_price": avg_history_price,
             }
             signal = self.strategy.execute(kline, **kwargs)
 
