@@ -54,8 +54,9 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         else:
             return False
     #--------------------------------Conditions---------------------------------------------------
-    def _is_ema_golden_cross(self):        
+    def _is_ema_golden_cross(self):
         has_crossed = self._ema_quick[-1] > self._ema_slow[-1] \
+        and self._ema_quick[-1] > self._ema_quick[-2] \
         and self._ema_quick[-2] >= self._ema_slow[-2] \
         and self._ema_quick[-3] < self._ema_slow[-3]
         check_periods = self._ema_slow_periods
@@ -109,7 +110,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         if has_crossed:
             min_hist = numpy.min(self._macdhist[-40:])
             #make sure the last dea smaller than the min hist bar
-            if min_hist >= 0 or self._macdsignal[-1] >= min_hist: #(min_hist * 2):# okcoin's macd hist doubled? don't why?
+            if min_hist >= 0 or self._macdsignal[-1] > (min_hist * 2):# okcoin's macd hist doubled? don't why?
                 return False
             else:
                 #check if diff was under dea for last at least 21 periods
@@ -124,7 +125,8 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         return False
     #-----------------------------------------------------------------------------------------------
     def _is_on_ranging(self):
-        arr_len = self._ema_quick_periods + self._ema_slow_periods
+        #arr_len = self._ema_quick_periods + self._ema_slow_periods
+        arr_len = self._ema_slow_periods
         slow_arr = self._ema_slow[-arr_len:]
         quick_arr = self._ema_quick[-arr_len:]
         slow_avg = numpy.average(slow_arr)
