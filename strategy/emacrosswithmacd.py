@@ -37,9 +37,10 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         : macd_long_signal as first long point, macd slope change always before ema corss, this is try to long at low price
         '''
         macd_golden_cross = self._is_macd_golden_cross()
-        macd_long_signal = self._is_slope_changing_to_positive() and self._is_long_price_under_last_dead_cross_price_percent(long_price)
+        macd_slope_signal = self._is_slope_changing_to_positive()
+        macd_signal = (macd_golden_cross or macd_slope_signal) and self._is_long_price_under_last_dead_cross_price_percent(long_price)
         ema_golden_cross = self._is_ema_golden_cross() and self._is_long_price_under_highest_price_percent(long_price)
-        if macd_golden_cross or macd_long_signal or ema_golden_cross:
+        if macd_signal or ema_golden_cross:
             return True
         else:
             return False
@@ -98,7 +99,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         """
         : 1: quick cross slow from bottom to above
         : 2: the dea must below the closest negative hist
-        : 3: the quick must below the slow at least 21 periods
+        : 3: the quick must below the slow at least 9 periods
         """
         has_crossed = self._macd[-1] < 0 and self._macdsignal[-1] < 0 \
         and self._macd[-1] > self._macd[-2] \
@@ -113,7 +114,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             else:
                 #check if diff was under dea for last at least 21 periods
                 i = -3
-                while i >= -23:
+                while i >= -12:
                     if self._macd[i] < self._macdsignal[i]:
                         i -= 1
                         continue
@@ -129,7 +130,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         slow_avg = numpy.average(slow_arr)
         slow_max = numpy.max(slow_arr)
         slow_min = numpy.min(slow_arr)
-        if (slow_max - slow_min) / slow_avg <= 0.006:
+        if (slow_max - slow_min) / slow_avg <= 0.005:
             return True
         else:
             return False

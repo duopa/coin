@@ -32,9 +32,9 @@ config_5min = {
 
 eamcrosswithmacd_config_3min = {
     "stop_profit_ratio": 0.008,#basically, any time dead cross then short
-    "stop_loss_ratio": 0.045,
+    "stop_loss_ratio": 0.1,
     "short_ratio": [0.6, 1],
-    "coin_most_hold_ratio": 0.3,
+    "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.2,
     "long_price_down_ratio": 0.025,
     "stop_loss_count_down": 1,
@@ -45,9 +45,9 @@ eamcrosswithmacd_config_3min = {
 
 eamcrosswithmacd_config_5min = {
     "stop_profit_ratio": 0.01,
-    "stop_loss_ratio": 0.045,
+    "stop_loss_ratio": 0.1,
     "short_ratio": [0.6, 1],
-    "coin_most_hold_ratio": 0.3,
+    "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.2,
     "long_price_down_ratio": 0.025,
     "stop_loss_count_down": 1,
