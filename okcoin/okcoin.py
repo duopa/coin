@@ -127,7 +127,7 @@ class OkCoin:
                 self._stop_loss(short_price)
 
             if self._has_traded_in_near_periods_already(9):
-                print('\tlast trade time {0}'.format(self._last_trade_time.strftime('%Y-%m-%d %H:%M%:S')))
+                print('\tlast trade time {0}'.format(self._last_trade_time.strftime('%Y-%m-%d %H:%M:%S')))
                 return
 
             if signal == 'l':

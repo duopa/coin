@@ -21,12 +21,19 @@ ticker = _ticker['ticker']
 last = float(ticker['last'])
 long_price = float(ticker['buy'])
 short_price = float(ticker['sell'])
-avg_long_price = 2000
+avg_history_price = 2000
 holding = 0 #float(self._funds['free'][self._coin_name])
 
-kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
+kwargs = {
+    'last': last, 
+    "lowest_price": 1980,
+    'long_price': long_price, 
+    'short_price': short_price, 
+    'avg_history_price': avg_history_price, 
+    'holding':holding
+    }
 
-kline = okcoinSpot.kline('eth_cny', '3min', 130)
+kline = okcoinSpot.kline('btc_cny', '3min', 130)
 strategy.execute(kline, **kwargs)
 
 def test_is_ema_golden_cross():
@@ -41,7 +48,11 @@ def test_is_on_ranging():
     result = strategy._is_on_ranging()
     print(result)
 
+def test_is_macd_golden_cross():
+    result = strategy._is_macd_golden_cross()
+    print(result)
 
+test_is_macd_golden_cross()
 test_is_ema_golden_cross()
 test_is_ema_dead_cross()
 test_is_on_ranging()
