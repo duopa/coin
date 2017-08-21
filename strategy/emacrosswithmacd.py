@@ -1,6 +1,7 @@
 from .strategybase import StrategyBase
 import numpy
 import talib
+import math
 
 class EmaCrossWithMacdStrategy(StrategyBase):
     """
@@ -16,6 +17,10 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         self._macdsignal = []
         self._macdhist = []
 
+    @property
+    def name(self):
+        return "EmaCrossWithMacd"
+
     def execute(self, kline, **kwargs):
         self._kline = kline
         #dif, dea, diff - dea?
@@ -24,16 +29,17 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         self._ema_slow = self._get_ema(self._ema_slow_periods)
         return super().execute(kline, **kwargs)
 
-    def _should_stop_loss(self, last, avg_long_price, holding):
-        return super()._should_stop_loss(last, avg_long_price, holding)
+    def _should_stop_loss(self, last, avg_history_price, holding):
+        return super()._should_stop_loss(last, avg_history_price, holding)
 
     def _long_signal(self, long_price):
         '''
         : macd_long_signal as first long point, macd slope change always before ema corss, this is try to long at low price
         '''
-        macd_long_signal = self._is_slope_changing_to_positive() and self._is_long_price_under_highest_price_percent(long_price)
-        is_golden_cross = self._is_ema_golden_cross()
-        if macd_long_signal or is_golden_cross:
+        macd_golden_cross = self._is_macd_golden_cross()
+        macd_long_signal = self._is_slope_changing_to_positive() and self._is_long_price_under_last_dead_cross_price_percent(long_price)
+        ema_golden_cross = self._is_ema_golden_cross() and self._is_long_price_under_highest_price_percent(long_price)
+        if macd_golden_cross or macd_long_signal or ema_golden_cross:
             return True
         else:
             return False
@@ -47,10 +53,21 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         else:
             return False
     #--------------------------------Conditions---------------------------------------------------
-    def _is_ema_golden_cross(self):
+    def _is_ema_golden_cross(self):        
         has_crossed = self._ema_quick[-1] > self._ema_slow[-1] \
         and self._ema_quick[-2] >= self._ema_slow[-2] \
         and self._ema_quick[-3] < self._ema_slow[-3]
+        check_periods = self._ema_slow_periods
+        i = -3
+        if has_crossed:
+            while i >= -check_periods:
+                if self._ema_quick[i] < self._ema_slow[i]:
+                    i -= 1
+                    continue
+                elif self._ema_quick[i-1] > self._ema_slow[i-1] \
+                    and self._ema_quick[i-2] > self._ema_slow[i-2] \
+                    and self._ema_quick[i-3] > self._ema_slow[i-3]:
+                    return False
         is_on_ranging = self._is_on_ranging()
         if has_crossed and not is_on_ranging and self._macdhist[-1] > 0:
             return True
@@ -58,15 +75,52 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             return False
 
     def _is_ema_dead_cross(self):
+        """
+        """
+        is_on_ranging = self._is_on_ranging()
+        #: if quick from top approching slow enough, then deem it's dead cross
+        approch_a = (self._ema_quick[-1] - self._ema_slow[-1]) / self._ema_slow[-1]
+        approch_b = (self._ema_quick[-2] - self._ema_slow[-2]) / self._ema_slow[-2]
+        if math.floor(self._ema_quick[-2]) > math.floor(self._ema_quick[-1]) \
+        and 0 < approch_a < 0.001 and 0 < approch_b < 0.001 \
+        and not is_on_ranging:
+            return True
+
         has_crossed = self._ema_quick[-1] < self._ema_slow[-1] \
         and self._ema_quick[-2] >= self._ema_slow[-2] \
         and self._ema_quick[-3] > self._ema_slow[-3]
-        is_on_ranging = self._is_on_ranging()
-        if has_crossed and not is_on_ranging and self._macdhist[-1] < 0:
+        if has_crossed and self._macdhist[-1] < 0:
             return True
         else:
             return False
-
+    #-----------------------------------------------------------------------------------------------
+    def _is_macd_golden_cross(self):
+        """
+        : 1: quick cross slow from bottom to above
+        : 2: the dea must below the closest negative hist
+        : 3: the quick must below the slow at least 21 periods
+        """
+        has_crossed = self._macd[-1] < 0 and self._macdsignal[-1] < 0 \
+        and self._macd[-1] > self._macdsignal[-1] \
+        and self._macd[-2] > self._macdsignal[-2] \
+        and self._macd[-3] < self._macdsignal[-3]
+        if has_crossed:
+            min_hist = numpy.min(self._macdhist[-40:])
+            #make sure the last dea smaller than the min hist bar
+            if min_hist >= 0 or self._macdsignal[-1] >= min_hist:
+                return False
+            else:
+                #check if diff was under dea for last at least 21 periods
+                i = -3
+                while i >= -23:
+                    if self._macd[i] < self._macdsignal[i]:
+                        i -= 1
+                        continue
+                    else:
+                        return False
+                return True
+        return False
+    #-----------------------------------------------------------------------------------------------
     def _is_on_ranging(self):
         arr_len = self._ema_quick_periods + self._ema_slow_periods
         slow_arr = self._ema_slow[-arr_len:]
@@ -74,7 +128,11 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         slow_avg = numpy.average(slow_arr)
         slow_max = numpy.max(slow_arr)
         slow_min = numpy.min(slow_arr)
+<<<<<<< HEAD
         if (slow_max - slow_min) / slow_avg < 0.008:
+=======
+        if (slow_max - slow_min) / slow_avg <= 0.006:
+>>>>>>> 405d0df316c605f33c1fff3279117ae3c2ae4ae8
             return True
         else:
             return False
@@ -99,7 +157,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         else:
             return False
 
-    def _is_long_price_under_highest_price_percent(self, long_price):
+    def _is_long_price_under_last_dead_cross_price_percent(self, long_price):
         '''
         : use EMA slow as highest price instead, this is out of EMA avg price make more sense than absolute highest price
         '''
@@ -118,3 +176,12 @@ class EmaCrossWithMacdStrategy(StrategyBase):
                     return True
                 else:
                     return False
+
+    def _is_long_price_under_highest_price_percent(self, long_price):
+        highest_price = self._params['highest_price']
+        percent = self._config["long_price_down_ratio"] - 0.01
+        diff = highest_price * (1 - percent)
+        if long_price <= diff:
+            return True
+        else:
+            return False

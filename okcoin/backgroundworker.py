@@ -22,6 +22,7 @@ class CancelOrderThread(threading.Thread):
         self._frequency = frequency
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
         self._logger = Logger('c:/logs/cancelorder', symbol)
+        self.daemon = True
 
     def run(self):
         while 1 == 1:

@@ -36,8 +36,6 @@ class OkCoin:
         self._frequency = frequency
         self._funds = {}
         self._ticker = {}
-        self._last_long_order_id = 0
-        self._last_short_order_id = 0
         self._short_occurs = 0
         self._config = None
         self._last_trade_time = datetime.now() - timedelta(days=1)
@@ -45,6 +43,7 @@ class OkCoin:
         self._strategy = None
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
         self._logger = None #Logger('c:/logs', symbol)
+        self._err_logger = None
     #------properties------
     @property
     def symbol(self):
@@ -74,11 +73,10 @@ class OkCoin:
         '''
         try:
             self._logger = Logger(log_path, self.symbol)
+            self._err_logger = Logger(log_path, self.symbol + '_err')
             print('---------------CONFIG---------------')
-            print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self.config['stop_profit_ratio']})
-            print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self.config['stop_loss_ratio']})
-            print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self.config['short_ratio']})
-            print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self.config['coin_most_hold_ratio']})
+            for k, v in self.config.items():
+                print("\t{0}: {1}".format(k, v))
             print('')
             self._logger.log('---------------start running---------------')
             self._update_user_info()
@@ -89,47 +87,62 @@ class OkCoin:
                 time.sleep(self._frequency)
         except:
             tb = traceback.format_exc()
-            self._logger.log(tb)
+            self._err_logger.log(tb)
 
     def process(self):
         """
         :
         """
-        try:            
+        try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print('======>>>process %(symbol)s %(type)s start at %(now)s ...' %{'symbol': self._symbol, 'type': self._type, 'now':now})
-            with self._mutex:  # make sure only one thread is modifying counter at a given time
-                kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
-                self._ticker = self._okcoin_spot.ticker(self._symbol)
-                ticker = self._ticker['ticker']
-                last = float(ticker['last'])
-                long_price = float(ticker['buy'])
-                short_price = float(ticker['sell'])
-                avg_long_price = self._get_last_n_long_avg_price(2, 10)
-                holding = float(self._funds['free'][self._coin_name])
+            print('======>>>process %(symbol)s %(type)s %(strategy)s start at %(now)s ...' 
+            %{'symbol': self._symbol, 'type': self._type, 'strategy': self.strategy.name, 'now':now})
+            #with self._mutex:  # make sure only one thread is modifying counter at a given time
+            kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
+            self._ticker = self._okcoin_spot.ticker(self._symbol)
+            ticker = self._ticker['ticker']
+            last = float(ticker['last'])
+            higt = float(ticker['high'])
+            low = float(ticker['low'])
+            long_price = float(ticker['buy'])
+            short_price = float(ticker['sell'])
+            avg_history_price = self._get_last_n_long_avg_price(2, 10)
+            holding = float(self._funds['free'][self._coin_name])
 
-                kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
-                signal = self.strategy.execute(kline, **kwargs)
+            kwargs = {
+                "last": last,
+                "highest_price": higt,
+                "lowest_price": low,
+                "holding":holding,
+                "long_price": long_price,
+                "short_price": short_price,
+                "avg_history_price": avg_history_price,
+            }
+            signal = self.strategy.execute(kline, **kwargs)
 
-                # stop loss first priority
-                if signal == 'sl':
-                    #低于当前卖价卖出
-                    short_price = short_price - 0.01
-                    self._stop_loss(short_price)
+            # stop loss first priority
+            if signal == 'sl':
+                #低于当前卖价卖出
+                short_price = short_price - 0.01
+                self._stop_loss(short_price)
 
-                if self._has_traded_in_near_periods_already(9):
-                    return
+            if self._has_traded_in_near_periods_already(9):
+                print('\tlast trade time {0}'.format(self._last_trade_time.strftime('%Y-%m-%d %H:%M%:S')))
+                return
 
-                if signal == 'l':
-                    self._long(long_price)
-                elif signal == 's':
-                    short_price = short_price - 0.01
-                    self._short(short_price)
-                    self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_long_price})
-                print('{0}\n'.format(ticker))
+            if signal == 'l':
+                self._long(long_price)
+            elif signal == 's':
+                short_price = short_price - 0.01
+                self._short(short_price)
+                self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_history_price})
+            print("------Parameters------")
+            for k, v in kwargs.items():
+                print("\t{0}: {1}".format(k, v))
+            #print('{0}\n'.format(ticker))
         except:
             tb = traceback.format_exc()
-            self._logger.log(tb)
+            self._err_logger.log(tb)
 
     #-----------------------------------------------------------------------------------------------
     def run_signal_test(self):
@@ -139,10 +152,8 @@ class OkCoin:
         try:
             self._logger = Logger(signal_test_log_path, self.symbol)
             print('---------------CONFIG---------------')
-            print('\tstop_profit_ratio: %(stop_profit_ratio)s\r' %{'stop_profit_ratio': self.config['stop_profit_ratio']})
-            print('\tstop_loss_ratio: %(stop_loss_ratio)s\r' %{'stop_loss_ratio': self.config['stop_loss_ratio']})
-            print('\tshort_ratio: %(short_ratio)s\r' %{'short_ratio': self.config['short_ratio']})
-            print('\tcoin_most_hold_ratio: %(coin_most_hold_ratio)s\r' %{'coin_most_hold_ratio': self.config['coin_most_hold_ratio']})
+            for k, v in self.config.items():
+                print("\t{0}: {1}".format(k, v))
             print('')
             self._logger.log('---------------start running---------------')
             self._update_user_info()
@@ -206,9 +217,10 @@ class OkCoin:
         if trade_result['result']:
             #:reset short_occurs, it's better to check this long trade really filled
             self._short_occurs = 0
-            self._last_long_order_id = trade_result['order_id']
+            order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
-            self._logger.log('long order %(orderid)s placed successfully' %{'orderid': self._last_long_order_id})
+            self._logger.log('long order %(orderid)s placed successfully' %{'orderid': order_id})
+            self._check_order_status(order_id)
         else:
             msg = '{0}'.format(trade_result)
             print('\t' + msg)
@@ -237,12 +249,36 @@ class OkCoin:
             #:increase short_occurs
             short_occurs_len = len(self.config['short_ratio'])
             self._short_occurs = self._short_occurs + 1 if self._short_occurs < (short_occurs_len -1) else self._short_occurs
-            self._last_short_order_id = trade_result['order_id']
+            order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
-            self._logger.log('short order %(orderid)s placed successfully' %{'orderid': self._last_short_order_id})
+            self._logger.log('short order %(orderid)s placed successfully' %{'orderid': order_id})
+            self._check_order_status(order_id)
         else:
             msg = '{0}'.format(trade_result)
             print('\t' + msg)
+            self._logger.log(msg)
+
+    def _check_order_status(self, order_id):
+        timer = threading.Timer(15, self._do_check_order_status, [order_id])
+        timer.daemon = True
+        timer.start()
+
+    def _do_check_order_status(self, order_id):
+        order_result = json.loads(self._okcoin_spot.order_info(self.symbol, order_id))
+        if not order_result['result']:
+            return
+        else:
+            orders = order_result['orders']
+            if not orders or orders[0]['status'] != 0: #0: not filled
+                return
+
+        result = json.loads(self._okcoin_spot.cancel_order(self.symbol, order_id))
+        if result['result']:
+            self._last_trade_time = datetime.now() - timedelta(days=1)
+            msg = 'order {0} cancelled successfully'.format(order_id)
+            self._logger.log(msg)
+        else:
+            msg = 'order {0} cancelled FAILED \n{1}'.format(order_id, result)
             self._logger.log(msg)
 
     def _amount_to_short(self, stop_loss=False):
@@ -283,15 +319,14 @@ class OkCoin:
         purchase = total * self.config['long_total_ratio']
         amount = 0
         if free_money >= purchase:
-            amount = round(purchase / price, rnd)
+            amount = purchase / price #round(purchase / price, rnd)
         else:
-            amount = round(free_money / price, rnd)
+            amount = free_money / price #round(free_money / price, rnd)
 
         if amount < lowest_unit:
             amount = 0
 
-        return amount
-
+        return math.trunc(amount * 1000)/1000
     #------------------------------------------------------------------------------------------------
     def _get_last_n_long_avg_price(self, nlong, historycount):
         '''

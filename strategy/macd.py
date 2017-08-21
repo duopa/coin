@@ -16,6 +16,10 @@ class MacdStrategy(StrategyBase):
         self._macd = []
         self._macdsignal = []
         self._macdhist = []
+    
+    @property
+    def name(self):
+        return "MACD"
     #-----------------------------------------------------------------------------------------------
     #def execute(self, kline, last, long_price, avg_long_price, holding):
     def  execute(self, kline, **kwargs):
@@ -300,8 +304,8 @@ class MacdStrategy(StrategyBase):
                 percent = self._config["long_price_down_ratio"]
                 diff = highest_price * (1 - percent)
                 #: if negtive hist under zero enough
-                ishuzbnp = self._is_hist_under_zero_back_n_periods(30)
-                if long_price <= diff or ishuzbnp:
+                #ishuzbnp = self._is_hist_under_zero_back_n_periods(30)
+                if long_price <= diff:
                     return True
                 else:
                     return False

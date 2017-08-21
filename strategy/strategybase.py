@@ -9,35 +9,41 @@ class StrategyBase:
     def __init__(self, **config):
         self._config = config
         self._stop_loss_count_down = 0
-        self._kline = []    
+        self._kline = []
+        self._params = {}
+
+    @property
+    def name(self):
+        return ''
 
     def execute(self, kline, **kwargs):
         '''
         : execute strategy
-        '''        
+        '''
+        self._params = kwargs
         last = kwargs['last']
         long_price = kwargs['long_price']
         short_price = kwargs['short_price']
-        avg_long_price = kwargs['avg_long_price']
+        avg_history_price = kwargs['avg_history_price']
         holding = kwargs['holding']
 
-        if self._should_stop_loss(last, avg_long_price, holding):
+        if self._should_stop_loss(last, avg_history_price, holding):
             return 'sl'
         elif self._long_signal(long_price):
             return 'l'
-        elif self._short_signal(short_price, avg_long_price):
+        elif self._short_signal(short_price, avg_history_price):
             return 's'
         else:
             return ''
 
-    def _should_stop_loss(self, last, avg_long_price, holding):
+    def _should_stop_loss(self, last, avg_history_price, holding):
         '''
         : stop loss signal
         '''
         stop_loss_ratio = self._config['stop_loss_ratio']
         if holding < 0.01:
             return False
-        if last <= (avg_long_price * (1- stop_loss_ratio)):
+        if last <= (avg_history_price * (1- stop_loss_ratio)):
             self._stop_loss_count_down = self._config['stop_loss_count_down']
             return True
         return False
