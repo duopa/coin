@@ -101,6 +101,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         : 3: the quick must below the slow at least 21 periods
         """
         has_crossed = self._macd[-1] < 0 and self._macdsignal[-1] < 0 \
+        and self._macd[-1] > self._macd[-2] \
         and self._macd[-1] > self._macdsignal[-1] \
         and self._macd[-2] >= self._macdsignal[-2] \
         and self._macd[-3] < self._macdsignal[-3]
