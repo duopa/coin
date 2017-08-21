@@ -102,7 +102,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         """
         has_crossed = self._macd[-1] < 0 and self._macdsignal[-1] < 0 \
         and self._macd[-1] > self._macdsignal[-1] \
-        and self._macd[-2] > self._macdsignal[-2] \
+        and self._macd[-2] >= self._macdsignal[-2] \
         and self._macd[-3] < self._macdsignal[-3]
         if has_crossed:
             min_hist = numpy.min(self._macdhist[-40:])
