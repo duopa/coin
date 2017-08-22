@@ -37,7 +37,7 @@ eamcrosswithmacd_config_3min = {
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
     "long_price_down_ratio": 0.025,
-    "stop_loss_count_down": 1,
+    "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
     "ema_quick_periods": 9,
     "ema_slow_periods": 21
@@ -50,7 +50,7 @@ eamcrosswithmacd_config_5min = {
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
     "long_price_down_ratio": 0.025,
-    "stop_loss_count_down": 1,
+    "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
     "ema_quick_periods": 9,
     "ema_slow_periods": 21
