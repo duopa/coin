@@ -431,8 +431,8 @@ class OkCoin:
         return lowest_unit, rnd
 
     def _log_strategy(self):
-        self._logger.log("macd: {0}".format(self.strategy.macd))
-        self._logger.log("macdsignal: {0}".format(self.strategy.macdsignal))
-        self._logger.log("macdhist: {0}".format(self.strategy.macdhist))
-        self._logger.log("ema_quick: {0}".format(self.strategy.ema_quick))
-        self._logger.log("ema_slow {0}".format(self.strategy.ema_slow))
+        self._logger.log("macd: {0}".format(self.strategy.macd[-50:]))
+        self._logger.log("macdsignal: {0}".format(self.strategy.macdsignal[-50:]))
+        self._logger.log("macdhist: {0}".format(self.strategy.macdhist[-50:]))
+        self._logger.log("ema_quick: {0}".format(self.strategy.ema_quick[-50:]))
+        self._logger.log("ema_slow {0}".format(self.strategy.ema_slow[-50:]))
