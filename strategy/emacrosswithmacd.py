@@ -31,9 +31,12 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         '''
         : macd_long_signal as first long point, macd slope change always before ema corss, this is try to long at low price
         '''
+        '''
         macd_golden_cross = self._is_macd_golden_cross()
         macd_slope_signal = self._is_slope_changing_to_positive()
         macd_signal = (macd_golden_cross or macd_slope_signal) and self._is_long_price_under_last_dead_cross_price_percent(long_price)
+        '''
+        macd_signal = self._is_macd_golden_cross() and self._is_long_price_under_last_dead_cross_price_percent(long_price)
         ema_golden_cross = self._is_ema_golden_cross() and self._is_long_price_under_highest_price_percent(long_price)
         if macd_signal or ema_golden_cross:
             return True
