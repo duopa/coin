@@ -269,11 +269,16 @@ class OkCoin:
         order_result = json.loads(self._okcoin_spot.order_info(self.symbol, order_id))
         if not order_result['result']:
             return
-        else:
-            orders = order_result['orders']
-            if not orders or orders[0]['status'] != 0: #0: not filled
-                return
+        orders = order_result['orders']
+        if orders and orders[0]['status'] in [1, 2]: #status:-1:已撤销  0:未成交  1:部分成交  2:完全成交 4:撤单处理中
+            #if this a long order, then place a short order to lock profit
+            if orders[0]['type'] == 'buy':
+                avg_price = orders[0]['avg_price']
+                deal_amount = orders[0]['deal_amount']
+                self._lock_profit(order_id, avg_price, deal_amount)
+            return
 
+        #if order not filled, cancel the order    
         result = json.loads(self._okcoin_spot.cancel_order(self.symbol, order_id))
         if result['result']:
             self._last_trade_time = datetime.now() - timedelta(days=1)
@@ -282,7 +287,21 @@ class OkCoin:
         else:
             msg = 'order {0} cancelled FAILED \n{1}'.format(order_id, result)
             self._logger.log(msg)
-
+    #------------------------------------------------------------------------------------------------
+    def _lock_profit(self, long_order_id, price, amount):
+        lowest_unit, rnd = self._trade_config()
+        #short half
+        if (amount / 2) >= lowest_unit:
+            amount = amount / 2
+        amount = math.trunc(amount * 1000)/1000
+        price = price * (1 + self.config['lock_profit_ratio'])
+        trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'sell', price, amount))
+        if trade_result['result']:
+            order_id = trade_result['order_id']
+            self._logger.log('lock profit order {0} placed successfully'.format(order_id))
+        else:
+            self._logger.log('lock profit order for original order {0} placed FAILED'.format(long_order_id))
+    #------------------------------------------------------------------------------------------------
     def _amount_to_short(self, stop_loss=False):
         lowest_unit, rnd = self._trade_config()
         #available for sale
@@ -302,7 +321,7 @@ class OkCoin:
                 amount = lowest_unit
 
         return math.trunc(amount * 1000)/1000
-
+    #------------------------------------------------------------------------------------------------
     def _amount_to_long(self, price):
         '''
         determine how many coins to buy base on total asset

@@ -15,6 +15,7 @@ config_3min = {
     "coin_most_hold_ratio": 0.35,
     "long_total_ratio": 0.3,
     "long_price_down_ratio": 0.025,
+    "lock_profit_ratio": 0.02,
     "stop_loss_count_down": 1,
     "give_up_long_count_down": 2
 }
@@ -26,6 +27,7 @@ config_5min = {
     "coin_most_hold_ratio": 0.3,
     "long_total_ratio": 0.3,
     "long_price_down_ratio": 0.03,
+    "lock_profit_ratio": 0.02,
     "stop_loss_count_down": 1,
     "give_up_long_count_down": 2
 }
@@ -37,6 +39,7 @@ eamcrosswithmacd_config_3min = {
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
     "long_price_down_ratio": 0.025,
+    "lock_profit_ratio": 0.02,
     "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
     "ema_quick_periods": 9,
@@ -50,6 +53,7 @@ eamcrosswithmacd_config_5min = {
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
     "long_price_down_ratio": 0.025,
+    "lock_profit_ratio": 0.02,
     "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
     "ema_quick_periods": 9,
