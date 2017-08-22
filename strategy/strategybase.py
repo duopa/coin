@@ -11,10 +11,35 @@ class StrategyBase:
         self._stop_loss_count_down = 0
         self._kline = []
         self._params = {}
+        self._ema_quick = []
+        self._ema_slow = []
+        self._macd = []
+        self._macdsignal = []
+        self._macdhist = []
 
     @property
     def name(self):
         return ''
+
+    @property
+    def macd(self):
+        return self._macd
+
+    @property
+    def macdsignal(self):
+        return self._macdsignal
+
+    @property
+    def macdhist(self):
+        return self._macdhist
+
+    @property
+    def ema_quick(self):
+        return self._ema_quick
+
+    @property
+    def ema_slow(self):
+        return self._ema_slow
 
     def execute(self, kline, **kwargs):
         '''

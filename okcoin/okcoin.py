@@ -132,10 +132,12 @@ class OkCoin:
 
             if signal == 'l':
                 self._long(long_price)
+                self._log_strategy()
             elif signal == 's':
                 short_price = short_price - 0.01
                 self._short(short_price)
                 self._logger.log('short price:%(price)s avgprice:%(avgprice)s' %{'price':short_price, 'avgprice':avg_history_price})
+                self._log_strategy()
             print("------Parameters------")
             for k, v in kwargs.items():
                 print("\t{0}: {1}".format(k, v))
@@ -408,3 +410,10 @@ class OkCoin:
             lowest_unit = 0.01
             rnd = 2
         return lowest_unit, rnd
+
+    def _log_strategy(self):
+        self._logger.log("macd: {0}".format(self.strategy.macd))
+        self._logger.log("macdsignal: {0}".format(self.strategy.macdsignal))
+        self._logger.log("macdhist: {0}".format(self.strategy.macdhist))
+        self._logger.log("ema_quick: {0}".format(self.strategy.ema_quick))
+        self._logger.log("ema_slow {0}".format(self.strategy.ema_slow))

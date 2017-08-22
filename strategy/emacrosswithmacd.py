@@ -10,12 +10,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
     def __init__(self, **config):
         StrategyBase.__init__(self, **config)
         self._ema_quick_periods = self._config['ema_quick_periods']
-        self._ema_slow_periods = self._config['ema_slow_periods']
-        self._ema_quick = []
-        self._ema_slow = []
-        self._macd = []
-        self._macdsignal = []
-        self._macdhist = []
+        self._ema_slow_periods = self._config['ema_slow_periods']        
 
     @property
     def name(self):
