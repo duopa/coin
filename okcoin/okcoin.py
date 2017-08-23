@@ -217,8 +217,6 @@ class OkCoin:
             return
         trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'buy', price, amount))
         if trade_result['result']:
-            #:reset short_occurs, it's better to check this long trade really filled
-            self._short_occurs = 0
             order_id = trade_result['order_id']
             self._last_trade_time = datetime.now()
             self._logger.log('long order %(orderid)s placed successfully' %{'orderid': order_id})
@@ -273,9 +271,15 @@ class OkCoin:
         if orders and orders[0]['status'] in [1, 2]: #status:-1:已撤销  0:未成交  1:部分成交  2:完全成交 4:撤单处理中
             #if this a long order, then place a short order to lock profit
             if orders[0]['type'] == 'buy':
+                #:reset short_occurs
+                self._short_occurs = 0
                 avg_price = orders[0]['avg_price']
                 deal_amount = orders[0]['deal_amount']
                 self._lock_profit(order_id, avg_price, deal_amount)
+            #if this is a short order, then place a long order in advance
+            elif orders[0]['type'] == 'sell':
+                avg_price = orders[0]['avg_price']
+                self._advance_long(avg_price)
             return
 
         #if order not filled, cancel the order    
@@ -301,6 +305,27 @@ class OkCoin:
             self._logger.log('lock profit order {0} placed successfully'.format(order_id))
         else:
             self._logger.log('lock profit order for original order {0} placed FAILED'.format(long_order_id))
+    #------------------------------------------------------------------------------------------------
+    def _advance_long(self, price):
+        """
+        :place a long order after short
+        """
+        orderhistory = json.loads(self._okcoin_spot.order_history(self._symbol, '0', '1', 5))
+        if orderhistory['result']:
+            orders = orderhistory['orders']
+            #if there are (long)order not filled
+            if orders:
+                return # return or cancel it???
+            else:
+                price = price * (1 - self.config["long_price_down_ratio"])
+                amount = self._amount_to_long(price)
+                trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'buy', price, amount))
+                if trade_result['result']:
+                    order_id = trade_result['order_id']
+                    self._logger.log('in advance order %(orderid)s placed successfully' %{'orderid': order_id})
+                else:
+                    msg = 'in advance order placed FAILED'
+                    self._logger.log(msg)
     #------------------------------------------------------------------------------------------------
     def _amount_to_short(self, stop_loss=False):
         lowest_unit, rnd = self._trade_config()
