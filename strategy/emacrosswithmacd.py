@@ -18,6 +18,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
 
     def execute(self, kline, **kwargs):
         self._kline = kline
+        self._close = self._get_close_from_kline()
         #dif, dea, diff - dea?
         self._macd, self._macdsignal, self._macdhist = self._get_macd()        
         self._ema_quick = self._get_ema(self._ema_quick_periods)

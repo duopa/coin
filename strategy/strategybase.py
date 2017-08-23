@@ -56,7 +56,6 @@ class StrategyBase:
         short_price = kwargs['short_price']
         avg_history_price = kwargs['avg_history_price']
         holding = kwargs['holding']
-        self._close = self._get_close_from_kline()
 
         if self._should_stop_loss(last, avg_history_price, holding):
             return 'sl'
