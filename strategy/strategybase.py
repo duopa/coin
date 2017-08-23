@@ -16,6 +16,7 @@ class StrategyBase:
         self._macd = []
         self._macdsignal = []
         self._macdhist = []
+        self._close = []
 
     @property
     def name(self):
@@ -41,6 +42,10 @@ class StrategyBase:
     def ema_slow(self):
         return self._ema_slow
 
+    @property
+    def close(self):
+        return self._close
+
     def execute(self, kline, **kwargs):
         '''
         : execute strategy
@@ -51,6 +56,7 @@ class StrategyBase:
         short_price = kwargs['short_price']
         avg_history_price = kwargs['avg_history_price']
         holding = kwargs['holding']
+        self._close = self._get_close_from_kline()
 
         if self._should_stop_loss(last, avg_history_price, holding):
             return 'sl'
@@ -93,14 +99,12 @@ class StrategyBase:
 
     #--------------------------------HELPER-------------------------------------------------------
     def _get_macd(self):
-        close_list = self._get_close_from_kline()
-        close = numpy.array(close_list)
+        close = numpy.array(self.close)
         #dif, dea, diff - dea?
         return talib.MACD(close, fastperiod=12, slowperiod=26, signalperiod=9)
 
     def _get_ema(self, periods):
-        close_list = self._get_close_from_kline()
-        close = numpy.array(close_list)
+        close = numpy.array(self.close)
         return talib.EMA(close, periods)
 
     def _get_close_from_kline(self):
@@ -119,8 +123,7 @@ class StrategyBase:
         '''
         : return the slow ema value and index when EMA dead cross
         '''
-        close_list = self._get_close_from_kline()
-        close = numpy.array(close_list)
+        close = numpy.array(self.close)
         ema_quick = talib.EMA(close, quick_periods)
         ema_slow = talib.EMA(close, slow_periods)
         index = -1

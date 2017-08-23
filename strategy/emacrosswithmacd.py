@@ -53,10 +53,15 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             return False
     #--------------------------------Conditions---------------------------------------------------
     def _is_ema_golden_cross(self):
-        has_crossed = self._ema_quick[-1] > self._ema_slow[-1] \
-        and self._ema_quick[-1] > self._ema_quick[-2] \
-        and self._ema_quick[-2] >= self._ema_slow[-2] \
-        and self._ema_quick[-3] < self._ema_slow[-3]
+        has_crossed = self.ema_quick[-1] > self.ema_slow[-1] \
+        and self.ema_quick[-2] > self.ema_slow[-2] \
+        and self.ema_quick[-3] > self.ema_slow[-3] \
+        and self.ema_quick[-4] >= self.ema_slow[-4] \
+        and self.ema_quick[-5] < self.ema_slow[-5] \
+        and self.ema_quick[-1] > self.ema_quick[-2] \
+        and self.ema_quick[-2] > self.ema_quick[-3] \
+        and self.ema_quick[-3] > self.ema_quick[-4]
+        
         check_periods = self._ema_slow_periods
         i = -3
         if has_crossed:
@@ -66,6 +71,10 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             if self._ema_quick[-1] - self.ema_quick[-3] < self.ema_quick[-3] - self.ema_quick[-5]:
                 return False
             """
+            #:make sure price not go up too much when long
+            price_uped = self.close[-1] - self.close[-5]
+            if (price_uped / self.close[-5]) > 0.01:
+                return False
             #make sure quick under slow _ema_slow_periods perirods
             while i >= -check_periods:
                 if self._ema_quick[i] < self._ema_slow[i]:
@@ -137,7 +146,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         slow_avg = numpy.average(slow_arr)
         slow_max = numpy.max(slow_arr)
         slow_min = numpy.min(slow_arr)
-        if (slow_max - slow_min) / slow_avg <= 0.005:
+        if (slow_max - slow_min) / slow_avg <= 0.0035:
             return True
         else:
             return False
@@ -184,7 +193,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
 
     def _is_long_price_under_highest_price_percent(self, long_price):
         highest_price = self._params['highest_price']
-        percent = self._config["long_price_down_ratio"] - 0.01
+        percent = self._config["long_price_down_ratio"]
         diff = highest_price * (1 - percent)
         if long_price <= diff:
             return True
