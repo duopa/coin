@@ -312,7 +312,7 @@ class OkCoin:
         """
         orderhistory = json.loads(self._okcoin_spot.order_history(self._symbol, '0', '1', 5))
         if orderhistory['result']:
-            orders = orderhistory['orders']
+            orders = list(filter(lambda x: x['type'] == 'buy', orderhistory['orders']))
             #if there are (long)order not filled
             if orders:
                 return # return or cancel it???
