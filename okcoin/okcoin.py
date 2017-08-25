@@ -313,6 +313,7 @@ class OkCoin:
         """
         :place a long order after short
         """
+        """
         orderhistory = json.loads(self._okcoin_spot.order_history(self._symbol, '0', '1', 5))
         if orderhistory['result']:
             orders = list(filter(lambda x: x['type'] == 'buy', orderhistory['orders']))
@@ -320,17 +321,18 @@ class OkCoin:
             if orders:
                 return # return or cancel it???
             else:
-                price = price * (1 - self.config[LONG_PRICE_DOWN_RATIO])
-                amount = self._amount_to_long(price)
-                trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'buy', price, amount))
-                if trade_result['result']:
-                    order_id = trade_result['order_id']
-                    #: lock profit
-                    self._lock_profit(order_id, price, amount)
-                    self._logger.log('in advance order %(orderid)s placed successfully' %{'orderid': order_id})
-                else:
-                    msg = 'in advance order placed FAILED'
-                    self._logger.log(msg)
+        """
+        price = price * (1 - self.config[LONG_PRICE_DOWN_RATIO])
+        amount = self._amount_to_long(price)
+        trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'buy', price, amount))
+        if trade_result['result']:
+            order_id = trade_result['order_id']
+            #: lock profit
+            self._lock_profit(order_id, price, amount)
+            self._logger.log('in advance order %(orderid)s placed successfully' %{'orderid': order_id})
+        else:
+            msg = 'in advance order placed FAILED'
+            self._logger.log(msg)
     #------------------------------------------------------------------------------------------------
     def _amount_to_short(self, stop_loss=False):
         lowest_unit, rnd = self._trade_config()
