@@ -10,6 +10,18 @@ signal_test_log_path = "c:\logs\stlogs"
 
 LONG_PRICE_DOWN_RATIO = 'long_price_down_ratio'
 
+config_1min = {
+    "stop_profit_ratio": 0.025,
+    "stop_loss_ratio": 0.045,
+    "short_ratio": [0.2, 0.3, 0.5],
+    "coin_most_hold_ratio": 0.35,
+    "long_total_ratio": 0.3,
+    "long_price_down_ratio": 0.025,
+    "lock_profit_ratio": 0.02,
+    "stop_loss_count_down": 1,
+    "give_up_long_count_down": 2
+}
+
 config_3min = {
     "stop_profit_ratio": 0.025,
     "stop_loss_ratio": 0.045,
@@ -32,6 +44,20 @@ config_5min = {
     "lock_profit_ratio": 0.02,
     "stop_loss_count_down": 1,
     "give_up_long_count_down": 2
+}
+
+eamcrosswithmacd_config_1min = {
+    "stop_profit_ratio": 0.008,
+    "stop_loss_ratio": 0.1,
+    "short_ratio": [1],
+    "coin_most_hold_ratio": 0.33,
+    "long_total_ratio": 0.1,
+    "long_price_down_ratio": 0.005,
+    "lock_profit_ratio": 0.01,
+    "stop_loss_count_down": 2,
+    "give_up_long_count_down": 2,
+    "ema_quick_periods": 9,
+    "ema_slow_periods": 21
 }
 
 eamcrosswithmacd_config_3min = {

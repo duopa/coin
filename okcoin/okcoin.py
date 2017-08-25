@@ -183,17 +183,17 @@ class OkCoin:
                 last = float(ticker['last'])
                 long_price = float(ticker['buy'])
                 short_price = float(ticker['sell'])
-                avg_long_price = self._get_last_n_long_avg_price(2, 10)
+                avg_history_price = self._get_last_n_long_avg_price(2, 10)
                 holding = float(self._funds['free'][self._coin_name])
 
-                kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_long_price': avg_long_price, 'holding':holding}
+                kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_history_price': avg_history_price, 'holding':holding}
                 signal = self.strategy.execute(kline, **kwargs)
 
                 if signal != "":
                     self._logger.log(signal)
         except:
             tb = traceback.format_exc()
-            self._logger.log(tb)
+            self._err_logger.log(tb)
     #-----------------------------------------------------------------------------------------------
 
     def _update_user_info(self):

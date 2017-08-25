@@ -21,8 +21,10 @@ def run():
         return
 
     print("please select strategy:")
+    print("101 : Macd-1min")
     print("103 : Macd-3min")
     print("105 : Macd-5min ")
+    print("201 : EMA Cross with MACD-1min")
     print("203 : EMA Cross with MACD-3min")
     print("205 : EMA Cross with MACD-5min")
     strategy_selected = input(">>>")
@@ -32,7 +34,11 @@ def run():
     config = {}
     time_type = "3min"
     strategy = None
-    if strategy_selected == "103":
+    if strategy_selected == "101":
+        time_type = "1min"
+        config = config_1min
+        strategy = MacdStrategy(**config)
+    elif strategy_selected == "103":
         time_type = "3min"
         config = config_3min
         strategy = MacdStrategy(**config)
@@ -40,6 +46,10 @@ def run():
         time_type = "5min"
         config = config_5min
         strategy = MacdStrategy(**config)
+    elif strategy_selected == "201":
+        time_type = "1min"
+        config = eamcrosswithmacd_config_1min
+        strategy = EmaCrossWithMacdStrategy(**config)
     elif strategy_selected == "203":
         time_type = "3min"
         config = eamcrosswithmacd_config_3min
