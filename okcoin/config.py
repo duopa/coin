@@ -8,6 +8,8 @@ url_com = "www.okcoin.com"
 log_path = "c:\logs"
 signal_test_log_path = "c:\logs\stlogs"
 
+LONG_PRICE_DOWN_RATIO = 'long_price_down_ratio'
+
 config_3min = {
     "stop_profit_ratio": 0.025,
     "stop_loss_ratio": 0.045,

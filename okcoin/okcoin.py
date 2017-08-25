@@ -14,7 +14,7 @@ import numpy
 from strategy import MacdStrategy
 from okcoin.OkcoinSpotAPI import OKCoinSpot
 from .key import api_key, secret_key
-from .config import url_cn, config_3min, config_5min, log_path, signal_test_log_path
+from .config import *
 from common import Logger
 
 class OkCoin:
@@ -317,11 +317,13 @@ class OkCoin:
             if orders:
                 return # return or cancel it???
             else:
-                price = price * (1 - self.config["long_price_down_ratio"])
+                price = price * (1 - self.config[LONG_PRICE_DOWN_RATIO])
                 amount = self._amount_to_long(price)
                 trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'buy', price, amount))
                 if trade_result['result']:
                     order_id = trade_result['order_id']
+                    #: lock profit
+                    self._lock_profit(order_id, price, amount)
                     self._logger.log('in advance order %(orderid)s placed successfully' %{'orderid': order_id})
                 else:
                     msg = 'in advance order placed FAILED'

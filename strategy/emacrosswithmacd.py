@@ -147,7 +147,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         slow_avg = numpy.average(slow_arr)
         slow_max = numpy.max(slow_arr)
         slow_min = numpy.min(slow_arr)
-        if (slow_max - slow_min) / slow_avg <= 0.0035:
+        if (slow_max - slow_min) / slow_avg <= 0.002:
             return True
         else:
             return False
