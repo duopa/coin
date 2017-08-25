@@ -263,7 +263,7 @@ class OkCoin:
         timer.daemon = True
         timer.start()
 
-    def _do_check_order_status(self, order_id):
+    def _do_check_order_status(self, order_id, double_check = True):
         order_result = json.loads(self._okcoin_spot.order_info(self.symbol, order_id))
         if not order_result['result']:
             return
@@ -289,8 +289,11 @@ class OkCoin:
             msg = 'order {0} cancelled successfully'.format(order_id)
             self._logger.log(msg)
         else:
-            msg = 'order {0} cancelled FAILED \n{1}'.format(order_id, result)
-            self._logger.log(msg)
+            if double_check:
+                self._do_check_order_status(order_id, False)
+            else:
+                msg = 'order {0} cancelled FAILED \n{1}'.format(order_id, result)
+                self._logger.log(msg)
     #------------------------------------------------------------------------------------------------
     def _lock_profit(self, long_order_id, price, amount):
         lowest_unit, rnd = self._trade_config()
