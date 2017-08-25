@@ -98,7 +98,9 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         #: if quick from top approching slow enough, then deem it's dead cross
         approch_a = (self._ema_quick[-1] - self._ema_slow[-1]) / self._ema_slow[-1]
         approch_b = (self._ema_quick[-2] - self._ema_slow[-2]) / self._ema_slow[-2]
-        if math.floor(self._ema_quick[-2]) > math.floor(self._ema_quick[-1]) \
+        if self.ema_quick[-3] > self.ema_slow[-3] \
+        and self.ema_quick[-2] > self.ema_slow[-2] \
+        and math.floor(self._ema_quick[-2]) > math.floor(self._ema_quick[-1]) \
         and 0 < approch_a < 0.0005 and 0 < approch_b < 0.0005 \
         and not is_on_ranging:
             return True
