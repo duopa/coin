@@ -123,7 +123,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         and self._macd[-2] >= self._macdsignal[-2] \
         and self._macd[-3] < self._macdsignal[-3]
         if has_crossed:
-            min_hist = numpy.min(self._macdhist)
+            min_hist = numpy.min(self._macdhist[-90:])
             #make sure the last dea smaller than the min hist bar
             if min_hist >= 0 or self._macdsignal[-1] > (min_hist * 2):# okcoin's macd hist doubled? don't why?
                 return False
