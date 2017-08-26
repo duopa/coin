@@ -17,10 +17,19 @@ class StrategyBase:
         self._macdsignal = []
         self._macdhist = []
         self._close = []
-
+        self._stop_profit_ratio = 0.01
+    
     @property
     def name(self):
         return ''
+
+    @property
+    def symbol(self):
+        return self._symbol
+    @symbol.setter
+    def symbol(self, value):
+        self._symbol = value
+        self._stop_profit_ratio = self._config["stop_profit_" + value[0:3]]
 
     @property
     def macd(self):
@@ -90,8 +99,8 @@ class StrategyBase:
         '''
         if short_price <= avg_history_price:
             return False
-        stop_profit_ratio = self._config['stop_profit_ratio']
-        if short_price < avg_history_price * (1 + stop_profit_ratio):
+
+        if short_price < avg_history_price * (1 + self._stop_profit_ratio):
             return False
         else:
             return True

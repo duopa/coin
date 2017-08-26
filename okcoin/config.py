@@ -47,13 +47,17 @@ config_5min = {
 }
 
 eamcrosswithmacd_config_1min = {
-    "stop_profit_ratio": 0.008,
+    "stop_profit_btc": 0.008,
+    "stop_profit_eth": 0.004,
+    "stop_profit_ltc": 0.008,
     "stop_loss_ratio": 0.1,
     "short_ratio": [1],
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
     "long_price_down_ratio": 0.005,
-    "lock_profit_ratio": 0.01,
+    "lock_profit_btc": 0.01,
+    "lock_profit_eth": 0.01,
+    "lock_profit_ltc": 0.01,
     "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
     "ema_quick_periods": 9,
@@ -61,13 +65,17 @@ eamcrosswithmacd_config_1min = {
 }
 
 eamcrosswithmacd_config_3min = {
-    "stop_profit_ratio": 0.01,#basically, any time dead cross then short
+    "stop_profit_btc": 0.01,
+    "stop_profit_eth": 0.008,
+    "stop_profit_ltc": 0.01, 
     "stop_loss_ratio": 0.1,
     "short_ratio": [0.6, 1],
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
     "long_price_down_ratio": 0.025,
-    "lock_profit_ratio": 0.03,
+    "lock_profit_btc": 0.03,
+    "lock_profit_eth": 0.03,
+    "lock_profit_ltc": 0.03,
     "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
     "ema_quick_periods": 9,
@@ -75,13 +83,17 @@ eamcrosswithmacd_config_3min = {
 }
 
 eamcrosswithmacd_config_5min = {
-    "stop_profit_ratio": 0.01,
+    "stop_profit_btc": 0.01,
+    "stop_profit_eth": 0.01,
+    "stop_profit_ltc": 0.01,
     "stop_loss_ratio": 0.1,
     "short_ratio": [0.6, 1],
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
     "long_price_down_ratio": 0.025,
-    "lock_profit_ratio": 0.035,
+    "lock_profit_btc": 0.035,
+    "lock_profit_eth": 0.035,
+    "lock_profit_ltc": 0.035,
     "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
     "ema_quick_periods": 9,

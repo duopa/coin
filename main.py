@@ -64,6 +64,7 @@ def run():
 
     okcoin = OkCoin(symbol, time_type, 10)
     okcoin.config = config
+    strategy.symbol = symbol
     okcoin.strategy = strategy
     if str(is_debug).upper() == 'Y':
         okcoin.run_signal_test()

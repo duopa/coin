@@ -58,6 +58,7 @@ class OkCoin:
     @config.setter
     def config(self, value):
         self._config = value
+        self._lock_profit_ratio = self.config["lock_profit_" + self._coin_name]
     
     @property
     def strategy(self):
@@ -301,7 +302,7 @@ class OkCoin:
         if (amount / 2) >= lowest_unit:
             amount = amount / 2
         amount = math.trunc(amount * 1000)/1000
-        price = price * (1 + self.config['lock_profit_ratio'])
+        price = price * (1 + self._lock_profit_ratio)
         trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'sell', price, amount))
         if trade_result['result']:
             order_id = trade_result['order_id']
