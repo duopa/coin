@@ -37,9 +37,10 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         macd_slope_signal = self._is_slope_changing_to_positive()
         macd_signal = (macd_golden_cross or macd_slope_signal) and self._is_long_price_under_last_dead_cross_price_percent(long_price)
         '''
+        is_on_ranging = self._is_on_ranging()
         macd_signal = self._is_macd_golden_cross() #and self._is_long_price_under_last_dead_cross_price_percent(long_price)
         ema_golden_cross = self._is_ema_golden_cross() and self._is_long_price_under_highest_price_percent(long_price)
-        if macd_signal or ema_golden_cross:
+        if (macd_signal or ema_golden_cross) and not is_on_ranging:
             return True
         else:
             return False
@@ -85,8 +86,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
                     and self._ema_quick[i-2] > self._ema_slow[i-2] \
                     and self._ema_quick[i-3] > self._ema_slow[i-3]:
                     return False
-        is_on_ranging = self._is_on_ranging()
-        if has_crossed and not is_on_ranging and self._macdhist[-1] > 0:
+        if has_crossed and self._macdhist[-1] > 0:
             return True
         else:
             return False
