@@ -39,7 +39,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         '''
         is_on_ranging = self._is_on_ranging()
         macd_signal = self._is_macd_golden_cross() #and self._is_long_price_under_last_dead_cross_price_percent(long_price)
-        ema_golden_cross = self._is_ema_golden_cross() and self._is_long_price_under_highest_price_percent(long_price)
+        ema_golden_cross = self._is_ema_golden_cross() #and self._is_long_price_under_highest_price_percent(long_price)
         if (macd_signal or ema_golden_cross) and not is_on_ranging:
             return True
         else:
@@ -74,6 +74,9 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             #:make sure price not go up too much when long
             price_uped = self.close[-1] - self.close[-5]
             if (price_uped / self.close[-5]) > 0.01:
+                return False
+            #: make sure dif > 0
+            if self.macd[-1] <= 0:
                 return False
             #make sure quick under slow _ema_slow_periods perirods
             while i >= -check_periods:
@@ -147,7 +150,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         slow_avg = numpy.average(slow_arr)
         slow_max = numpy.max(slow_arr)
         slow_min = numpy.min(slow_arr)
-        if (slow_max - slow_min) / slow_avg <= 0.001:
+        if (slow_max - slow_min) / slow_avg <= self._config['on_ranging']:
             return True
         else:
             return False
