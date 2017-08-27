@@ -60,12 +60,10 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         and self.ema_quick[-3] > self.ema_slow[-3] \
         and self.ema_quick[-4] >= self.ema_slow[-4] \
         and self.ema_quick[-5] < self.ema_slow[-5] \
-        and self.ema_quick[-1] > self.ema_quick[-2] \
-        and self.ema_quick[-2] > self.ema_quick[-3] \
-        and self.ema_quick[-3] > self.ema_quick[-4]
-        
+        and self.ema_quick[-1] > self.ema_quick[-2] > self.ema_quick[-3] > self.ema_quick[-4]
+
         check_periods = self._ema_slow_periods
-        i = -3
+        i = -5
         if has_crossed:
             #:make sure slope of after cross bigger than before
             #:this need improve
