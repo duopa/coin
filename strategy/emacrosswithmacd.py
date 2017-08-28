@@ -126,8 +126,16 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         and self._macd[-2] >= self._macdsignal[-2] \
         and self._macd[-3] < self._macdsignal[-3]
         if has_crossed:
-            min_hist = numpy.min(self._macdhist[-90:])
+            #:make sure the difference between the last close and nearest lowest kline close less than macd_long_price_threshold
+            check_periods = self._ema_quick_periods
+            nearest_closes = self.close[-check_periods:]
+            min_close = numpy.min(nearest_closes)
+            last_close = nearest_closes[-1]
+            diff = (last_close - min_close) / min_close
+            if diff >= self._config["macd_long_price_threshold"]:
+                return False
             #make sure the last dea smaller than the min hist bar
+            min_hist = numpy.min(self._macdhist[-90:])
             if min_hist >= 0 or math.isnan(min_hist) or self._macdsignal[-1] > (min_hist * 2):# okcoin's macd hist doubled? don't why?
                 return False
             else:
