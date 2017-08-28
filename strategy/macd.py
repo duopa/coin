@@ -22,17 +22,14 @@ class MacdStrategy(StrategyBase):
         return "MACD"
     #-----------------------------------------------------------------------------------------------
     #def execute(self, kline, last, long_price, avg_long_price, holding):
-    def  execute(self, kline, **kwargs):
+    def  execute(self, kline, kline_assistant, **kwargs):
         '''
         : execute strategy
         '''
         #now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         #print('at:%(datetime)s MacdStrategy executing' %{'datetime': now})
-
-        self._kline = kline
-        #dif, dea, diff - dea?
-        self._macd, self._macdsignal, self._macdhist = self._get_macd()
-        return super().execute(kline, **kwargs)
+        super().execute(kline, kline_assistant, **kwargs)
+        return self._signal()
     #-----------------------------------------------------------------------------------------------
     def _long_signal(self, long_price):
         '''

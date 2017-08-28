@@ -10,6 +10,7 @@ class StrategyBase:
         self._config = config
         self._stop_loss_count_down = 0
         self._kline = []
+        self._kline_assistant = []
         self._params = {}
         self._ema_quick = []
         self._ema_slow = []
@@ -55,16 +56,26 @@ class StrategyBase:
     def close(self):
         return self._close
 
-    def execute(self, kline, **kwargs):
+    def execute(self, kline, kline_assistant, **kwargs):
         '''
         : execute strategy
         '''
         self._params = kwargs
-        last = kwargs['last']
-        long_price = kwargs['long_price']
-        short_price = kwargs['short_price']
-        avg_history_price = kwargs['avg_history_price']
-        holding = kwargs['holding']
+        self._kline = kline
+        self._kline_assistant = kline_assistant
+        self._close = self._get_close_from_kline(kline)
+        #dif, dea, diff - dea?
+        self._macd, self._macdsignal, self._macdhist = self._get_macd(self._close)
+
+    def _signal(self):
+        '''
+        :return signal
+        '''
+        last = self._params['last']
+        long_price = self._params['long_price']
+        short_price = self._params['short_price']
+        avg_history_price = self._params['avg_history_price']
+        holding = self._params['holding']
 
         if self._should_stop_loss(last, avg_history_price, holding):
             return 'sl'
@@ -106,8 +117,8 @@ class StrategyBase:
             return True
 
     #--------------------------------HELPER-------------------------------------------------------
-    def _get_macd(self):
-        close = numpy.array(self.close)
+    def _get_macd(self, close):
+        close = numpy.array(close)
         #dif, dea, diff - dea?
         return talib.MACD(close, fastperiod=12, slowperiod=26, signalperiod=9)
 
@@ -115,9 +126,9 @@ class StrategyBase:
         close = numpy.array(self.close)
         return talib.EMA(close, periods)
 
-    def _get_close_from_kline(self):
+    def _get_close_from_kline(self, kline):
         close = []
-        for arr in self._kline:
+        for arr in kline:
             close.append(arr[4])
         return close
 

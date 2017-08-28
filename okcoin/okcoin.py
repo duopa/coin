@@ -33,6 +33,7 @@ class OkCoin:
         self._symbol = symbol
         self._coin_name = symbol[0:3]
         self._type = time_type
+        self._assistant_type = time_type
         self._frequency = frequency
         self._funds = {}
         self._ticker = {}
@@ -44,6 +45,7 @@ class OkCoin:
         self._okcoin_spot = OKCoinSpot(url_cn, self._apikey, self._secretkey)
         self._logger = None #Logger('c:/logs', symbol)
         self._err_logger = None
+        self._lock_profit_ratio = 0.01
     #------properties------
     @property
     def symbol(self):
@@ -59,6 +61,7 @@ class OkCoin:
     def config(self, value):
         self._config = value
         self._lock_profit_ratio = self.config["lock_profit_" + self._coin_name]
+        self._assistant_type = self.config['assistant_type']
     
     @property
     def strategy(self):
@@ -96,10 +99,14 @@ class OkCoin:
         """
         try:
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print('>>>process %(symbol)s %(type)s %(strategy)s start at %(now)s ...' 
+            print('>>>process %(symbol)s %(type)s %(strategy)s start at %(now)s ...'
             %{'symbol': self._symbol, 'type': self._type, 'strategy': self.strategy.name, 'now':now})
             #with self._mutex:  # make sure only one thread is modifying counter at a given time
             kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
+            if self._type != self._assistant_type:
+                kline_assistant = self._okcoin_spot.kline(self._symbol, self._assistant_type, 130, '')
+            else:
+                kline_assistant = []
             self._ticker = self._okcoin_spot.ticker(self._symbol)
             ticker = self._ticker['ticker']
             last = float(ticker['last'])
@@ -119,7 +126,7 @@ class OkCoin:
                 "short_price": short_price,
                 "avg_history_price": avg_history_price,
             }
-            signal = self.strategy.execute(kline, **kwargs)
+            signal = self.strategy.execute(kline, kline_assistant, **kwargs)
 
             # stop loss first priority
             if signal == 'sl':
@@ -154,10 +161,12 @@ class OkCoin:
         '''
         try:
             self._logger = Logger(signal_test_log_path, self.symbol)
+            self._err_logger = Logger(log_path, self.symbol + '_err')
             print('---------------CONFIG---------------')
             for k, v in self.config.items():
                 print("\t{0}: {1}".format(k, v))
             print('')
+            
             self._logger.log('---------------start running---------------')
             self._update_user_info()
             while not self._stopped:
@@ -179,6 +188,10 @@ class OkCoin:
             print('======>>>process %(symbol)s %(type)s start at %(now)s ...' %{'symbol': self._symbol, 'type': self._type, 'now':now})
             with self._mutex:  # make sure only one thread is modifying counter at a given time
                 kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
+                if self._type != self._assistant_type:
+                    kline_assistant = self._okcoin_spot.kline(self._symbol, self._assistant_type, 130, '')
+                else:
+                    kline_assistant = []
                 self._ticker = self._okcoin_spot.ticker(self._symbol)
                 ticker = self._ticker['ticker']
                 last = float(ticker['last'])
@@ -188,7 +201,7 @@ class OkCoin:
                 holding = float(self._funds['free'][self._coin_name])
 
                 kwargs = {'last': last, 'long_price': long_price, 'short_price': short_price, 'avg_history_price': avg_history_price, 'holding':holding}
-                signal = self.strategy.execute(kline, **kwargs)
+                signal = self.strategy.execute(kline, kline_assistant, **kwargs)
 
                 if signal != "":
                     self._logger.log(signal)

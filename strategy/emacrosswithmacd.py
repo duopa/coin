@@ -16,14 +16,14 @@ class EmaCrossWithMacdStrategy(StrategyBase):
     def name(self):
         return "EmaCrossWithMacd"
 
-    def execute(self, kline, **kwargs):
-        self._kline = kline
-        self._close = self._get_close_from_kline()
-        #dif, dea, diff - dea?
-        self._macd, self._macdsignal, self._macdhist = self._get_macd()        
+    def execute(self, kline, kline_assistant, **kwargs):
+        '''
+        :
+        '''
+        super().execute(kline, kline_assistant, **kwargs)
         self._ema_quick = self._get_ema(self._ema_quick_periods)
         self._ema_slow = self._get_ema(self._ema_slow_periods)
-        return super().execute(kline, **kwargs)
+        return self._signal()
 
     def _should_stop_loss(self, last, avg_history_price, holding):
         return super()._should_stop_loss(last, avg_history_price, holding)
@@ -38,7 +38,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         macd_signal = (macd_golden_cross or macd_slope_signal) and self._is_long_price_under_last_dead_cross_price_percent(long_price)
         '''
         is_on_ranging = self._is_on_ranging()
-        macd_signal = self._is_macd_golden_cross() #and self._is_long_price_under_last_dead_cross_price_percent(long_price)
+        macd_signal = self._is_assistant_dif_slope_positive() and self._is_macd_golden_cross() #and self._is_long_price_under_last_dead_cross_price_percent(long_price)
         ema_golden_cross = self._is_ema_golden_cross() #and self._is_long_price_under_highest_price_percent(long_price)
         if (macd_signal or ema_golden_cross) and not is_on_ranging:
             return True
@@ -149,6 +149,17 @@ class EmaCrossWithMacdStrategy(StrategyBase):
                         return False
                 return True
         return False
+
+    def _is_assistant_dif_slope_positive(self):
+        #: if no assistant, ignore
+        if not self._kline_assistant:
+            return True
+        close = self._get_close_from_kline(self._kline_assistant)
+        macd, macdsignal, macdhist = self._get_macd(close)
+        if macd[-1] > macd[-2]:
+            return True
+        else:
+            return False
     #-----------------------------------------------------------------------------------------------
     def _is_on_ranging(self):
         #arr_len = self._ema_quick_periods + self._ema_slow_periods
