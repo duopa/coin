@@ -71,10 +71,20 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             if self._ema_quick[-1] - self.ema_quick[-3] < self.ema_quick[-3] - self.ema_quick[-5]:
                 return False
             """
+            #:make sure the difference between the last close and nearest lowest kline close less than macd_long_price_threshold
+            check_periods = self._ema_slow_periods
+            nearest_closes = self.close[-check_periods:]
+            min_close = numpy.min(nearest_closes)
+            last_close = nearest_closes[-1]
+            diff = (last_close - min_close) / min_close
+            if diff >= self._config["macd_long_price_threshold"]:
+                return False
             #:make sure price not go up too much when long
+            '''
             price_uped = self.close[-1] - self.close[-5]
             if (price_uped / self.close[-5]) > 0.01:
                 return False
+            '''
             #: make sure dif > 0
             if self.macd[-1] <= 0:
                 return False
