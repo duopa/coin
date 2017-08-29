@@ -61,7 +61,7 @@ eamcrosswithmacd_config_1min = {
     "long_price_down_ratio": 0.01,
     "stop_loss_count_down": 3,
     "give_up_long_count_down": 2,
-    "on_ranging": 0.001,
+    "on_ranging": 0.0013,
     "macd_long_price_threshold": 0.01,
     "ema_quick_periods": 9,
     "ema_slow_periods": 21    
@@ -82,7 +82,7 @@ eamcrosswithmacd_config_3min = {
     "long_price_down_ratio": 0.025,
     "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
-    "on_ranging": 0.001,
+    "on_ranging": 0.0013,
     "macd_long_price_threshold": 0.01,
     "ema_quick_periods": 9,
     "ema_slow_periods": 21
@@ -103,7 +103,7 @@ eamcrosswithmacd_config_5min = {
     "long_price_down_ratio": 0.025,
     "stop_loss_count_down": 2,
     "give_up_long_count_down": 2,
-    "on_ranging": 0.001,
+    "on_ranging": 0.0013,
     "macd_long_price_threshold": 0.01,
     "ema_quick_periods": 9,
     "ema_slow_periods": 21
