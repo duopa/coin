@@ -18,8 +18,12 @@ class StrategyBase:
         self._macdsignal = []
         self._macdhist = []
         self._close = []
+        self._macd_assis = []
+        self._macdsignal_assis = []
+        self._macdhist_assis = []
+        self._close_assis = []
         self._stop_profit_ratio = 0.01
-    
+
     @property
     def name(self):
         return ''
@@ -66,6 +70,9 @@ class StrategyBase:
         self._close = self._get_close_from_kline(kline)
         #dif, dea, diff - dea?
         self._macd, self._macdsignal, self._macdhist = self._get_macd(self._close)
+        if kline_assistant:
+            self._close_assis = self._get_close_from_kline(kline_assistant)
+            self._macd_assis, self._macdsignal_assis, self._macdhist_assis = self._get_macd(self._close_assis)
 
     def _signal(self):
         '''

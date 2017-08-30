@@ -71,6 +71,9 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             if self._ema_quick[-1] - self.ema_quick[-3] < self.ema_quick[-3] - self.ema_quick[-5]:
                 return False
             """
+            #:make sure assistant dea under zero
+            if self._macdsignal_assis and self._macdsignal_assis[-1] >= 0:
+                return False
             #:make sure the difference between the last close and nearest lowest kline close less than macd_long_price_threshold
             check_periods = self._ema_slow_periods
             nearest_closes = self.close[-check_periods:]
@@ -164,9 +167,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         #: if no assistant, ignore
         if not self._kline_assistant:
             return True
-        close = self._get_close_from_kline(self._kline_assistant)
-        macd, macdsignal, macdhist = self._get_macd(close)
-        if macd[-1] > macd[-2]:
+        if self._macd_assis[-1] > self._macd_assis[-2]:
             return True
         else:
             return False
