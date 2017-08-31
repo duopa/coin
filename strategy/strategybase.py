@@ -18,9 +18,9 @@ class StrategyBase:
         self._macdsignal = []
         self._macdhist = []
         self._close = []
-        self._macd_assis = []
-        self._macdsignal_assis = []
-        self._macdhist_assis = []
+        self._macd_assis = numpy.empty(0)
+        self._macdsignal_assis = numpy.empty(0)
+        self._macdhist_assis = numpy.empty(0)
         self._close_assis = []
         self._stop_profit_ratio = 0.01
 

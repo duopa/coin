@@ -72,7 +72,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
                 return False
             """
             #:make sure assistant dea under zero
-            if self._macdsignal_assis and self._macdsignal_assis[-1] >= 0:
+            if self._macdsignal_assis.size > 0 and self._macdsignal_assis[-1] >= 0:
                 return False
             #:make sure the difference between the last close and nearest lowest kline close less than macd_long_price_threshold
             check_periods = self._ema_slow_periods
