@@ -68,14 +68,14 @@ eamcrosswithmacd_config_1min = {
 }
 
 eamcrosswithmacd_config_3min = {
-    "assistant_type": "3min",
+    "assistant_type": "15min",
     "stop_loss_ratio": 0.1,
-    "stop_profit_btc": 0.01,
-    "stop_profit_eth": 0.008,
-    "stop_profit_ltc": 0.01,
-    "lock_profit_btc": 0.03,
-    "lock_profit_eth": 0.03,
-    "lock_profit_ltc": 0.03,
+    "stop_profit_btc": 0.02,
+    "stop_profit_eth": 0.02,
+    "stop_profit_ltc": 0.02,
+    "lock_profit_btc": 0.05,
+    "lock_profit_eth": 0.05,
+    "lock_profit_ltc": 0.05,
     "short_ratio": [0.6, 1],
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
