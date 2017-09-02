@@ -63,8 +63,9 @@ eamcrosswithmacd_config_1min = {
     "give_up_long_count_down": 2,
     "on_ranging": 0.0013,
     "macd_long_price_threshold": 0.01,
+    "four_green_price_threshold": 0.008,#four green bar price rised should not excees this
     "ema_quick_periods": 9,
-    "ema_slow_periods": 21    
+    "ema_slow_periods": 21
 }
 
 eamcrosswithmacd_config_3min = {
@@ -84,6 +85,7 @@ eamcrosswithmacd_config_3min = {
     "give_up_long_count_down": 2,
     "on_ranging": 0.0013,
     "macd_long_price_threshold": 0.01,
+    "four_green_price_threshold": 0.01,
     "ema_quick_periods": 9,
     "ema_slow_periods": 21
 }
@@ -105,6 +107,7 @@ eamcrosswithmacd_config_5min = {
     "give_up_long_count_down": 2,
     "on_ranging": 0.0013,
     "macd_long_price_threshold": 0.01,
+    "four_green_price_threshold": 0.01,
     "ema_quick_periods": 9,
     "ema_slow_periods": 21
 }

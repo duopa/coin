@@ -380,7 +380,7 @@ class MacdStrategy(StrategyBase):
         :0.001
         """
         closes = self._get_close_from_kline()[-periods:]
-        opens = self._get_open_from_kline()[-periods:]
+        opens = self._get_open_from_kline(self._kline)[-periods:]
         close_avg = abs(numpy.average(closes))
         open_avg = abs(numpy.average(opens))
         max_v = max(close_avg, open_avg)

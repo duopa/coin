@@ -40,7 +40,8 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         is_on_ranging = self._is_on_ranging()
         macd_signal = self._is_assistant_dif_slope_positive() and self._is_macd_golden_cross() #and self._is_long_price_under_last_dead_cross_price_percent(long_price)
         ema_golden_cross = self._is_ema_golden_cross() #and self._is_long_price_under_highest_price_percent(long_price)
-        if (macd_signal or ema_golden_cross) and not is_on_ranging:
+        has_four_green = self._has_four_green()
+        if (macd_signal or ema_golden_cross or has_four_green) and not is_on_ranging:
             return True
         else:
             return False
@@ -168,6 +169,44 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         if not self._kline_assistant:
             return True
         if self._macd_assis[-1] > self._macd_assis[-2]:
+            return True
+        else:
+            return False
+    #-----------------------------------------------------------------------------------------------
+    def _has_four_green(self):
+        """
+        :4 continuous green kline going up
+        :each close greater than previous close
+        :price not go up more than threthold
+        """
+        four_kline = self._kline[-4:]
+        opens = self._get_value_from_kline(four_kline, 1)
+        has_four_green = True
+        #:make sure open below close
+        for i in range(-1, -5, -1): 
+            if opens[i] < self._close[i]:
+                continue
+            else:
+                has_four_green = False
+        if has_four_green:
+            #:make sure close step up
+            for i in range(-1, -4, -1):    
+                if self._close[i] <= self._close[i-1]:
+                    return False
+            #:make sure price no go up more than threshold
+            diff = (self._close[-1] - opens[-4]) / opens[-4]
+            if diff > self._config['four_green_price_threshold']:
+                return False
+            #:make sure the kline like a bar, not a star
+            highes = self._get_value_from_kline(four_kline, 2)
+            lows = self._get_value_from_kline(four_kline, 3)
+            for i in range(-1, -5, -1):
+                if highes[i] != lows[i]:
+                    bar_percent = (self._close[i] - opens[i]) / (highes[i] - lows[i])
+                    if abs(bar_percent) < 0.6:
+                        return False
+                else:
+                    continue
             return True
         else:
             return False

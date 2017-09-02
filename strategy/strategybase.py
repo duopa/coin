@@ -139,11 +139,17 @@ class StrategyBase:
             close.append(arr[4])
         return close
 
-    def _get_open_from_kline(self):
+    def _get_open_from_kline(self, kline):
         opens = []
-        for arr in self._kline:
+        for arr in kline:
             opens.append(arr[1])
         return opens
+
+    def _get_value_from_kline(self, kline, index):
+        values = []
+        for arr in kline:
+            values.append(arr[index])
+        return values
 
     def _get_last_ema_dead_cross_avg_price(self, quick_periods, slow_periods):
         '''
