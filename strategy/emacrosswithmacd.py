@@ -166,11 +166,14 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         return False
 
     def _is_macd_slope_change_to_positive(self):
-        changed = self._macd[-1] > self._macd[-2]
+        changed = 0 > self._macd[-1] > self._macd[-2]
         if changed:
             #make sure the last dea smaller than the min hist bar
             min_hist = numpy.min(self._macdhist[-90:])
             if min_hist >= 0 or math.isnan(min_hist) or self._macdsignal[-1] > (min_hist * 2):# okcoin's macd hist doubled? don't why?
+                return False
+            min_hist = numpy.min(self._macdhist_assis[-60:])
+            if min_hist >= 0 or math.isnan(min_hist) or self._macdsignal_assis[-1] > (min_hist * 2):# okcoin's macd hist doubled? don't why?
                 return False
             i = -1
             while i >= -12:
