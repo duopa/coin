@@ -62,8 +62,7 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         and self.ema_quick[-5] < self.ema_slow[-5] \
         and self.ema_quick[-1] > self.ema_quick[-2] > self.ema_quick[-3] > self.ema_quick[-4]
 
-        check_periods = self._ema_slow_periods
-        i = -5
+        check_periods = self._ema_quick_periods
         if has_crossed:
             #:make sure slope of after cross bigger than before
             #:this need improve
@@ -75,7 +74,6 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             if self._macdsignal_assis.size > 0 and self._macdsignal_assis[-1] >= 0:
                 return False
             #:make sure the difference between the last close and nearest lowest kline close less than macd_long_price_threshold
-            check_periods = self._ema_slow_periods
             nearest_closes = self.close[-check_periods:]
             min_close = numpy.min(nearest_closes)
             last_close = nearest_closes[-1]
@@ -91,7 +89,9 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             #: make sure dif > 0
             if self.macd[-1] <= 0:
                 return False
-            #make sure quick under slow _ema_slow_periods perirods
+            #make sure quick under slow check_periods perirods
+            i = -5
+            check_periods = self._ema_slow_periods
             while i >= -check_periods:
                 if self._ema_quick[i] < self._ema_slow[i]:
                     i -= 1
