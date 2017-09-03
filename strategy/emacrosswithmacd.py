@@ -211,16 +211,16 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             else:
                 has_four_green = False
         if has_four_green:
+            highes = self._get_value_from_kline(four_kline, 2)
             #:make sure close step up
-            for i in range(-1, -4, -1):    
-                if self._close[i] <= self._close[i-1]:
+            for i in range(-1, -4, -1):
+                if self._close[i] <= self._close[i-1] or highes[i] <= highes[i-1]:
                     return False
             #:make sure price no go up more than threshold
             diff = (self._close[-1] - opens[-4]) / opens[-4]
             if diff > self._config['four_green_price_threshold']:
                 return False
             #:make sure the kline like a bar, not a star
-            highes = self._get_value_from_kline(four_kline, 2)
             lows = self._get_value_from_kline(four_kline, 3)
             for i in range(-1, -5, -1):
                 if highes[i] != lows[i]:
