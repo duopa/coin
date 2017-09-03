@@ -59,7 +59,7 @@ eamcrosswithmacd_config_1min = {
     "coin_most_hold_ratio": 0.33,
     "long_total_ratio": 0.1,
     "long_price_down_ratio": 0.01,
-    "advance_long_down_ratio": 0.015,
+    "advance_long_down_ratio": 0.02,
     "stop_loss_count_down": 3,
     "on_ranging": 0.0013,
     "macd_long_price_threshold": 0.01,
