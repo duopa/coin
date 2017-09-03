@@ -336,7 +336,7 @@ class OkCoin:
                 return # return or cancel it???
             else:
         """
-        price = price * (1 - self.config[LONG_PRICE_DOWN_RATIO])
+        price = price * (1 - self.config['advance_long_down_ratio'])
         amount = self._amount_to_long(price)
         trade_result = json.loads(self._okcoin_spot.trade(self._symbol, 'buy', price, amount))
         if trade_result['result']:
