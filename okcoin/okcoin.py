@@ -102,6 +102,7 @@ class OkCoin:
             print('>>>process %(symbol)s %(type)s %(strategy)s start at %(now)s ...'
             %{'symbol': self._symbol, 'type': self._type, 'strategy': self.strategy.name, 'now':now})
             #with self._mutex:  # make sure only one thread is modifying counter at a given time
+            avg_history_price = self._get_last_n_long_avg_price(2, 10)
             kline = self._okcoin_spot.kline(self._symbol, self._type, 130, '')
             if self._type != self._assistant_type:
                 kline_assistant = self._okcoin_spot.kline(self._symbol, self._assistant_type, 130, '')
@@ -113,8 +114,7 @@ class OkCoin:
             higt = float(ticker['high'])
             low = float(ticker['low'])
             long_price = float(ticker['buy'])
-            short_price = float(ticker['sell'])
-            avg_history_price = self._get_last_n_long_avg_price(2, 10)
+            short_price = float(ticker['sell'])            
             holding = float(self._funds['free'][self._coin_name])
 
             kwargs = {
