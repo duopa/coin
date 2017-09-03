@@ -40,7 +40,9 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         is_on_ranging = self._is_on_ranging()
         #macd_signal = self._is_assistant_dif_slope_positive() and self._is_macd_golden_cross() #and self._is_long_price_under_last_dead_cross_price_percent(long_price)
         macd_signal = self._is_macd_slope_change_to_positive()
-        ema_golden_cross = self._is_ema_golden_cross() #and self._is_long_price_under_highest_price_percent(long_price)
+        #ema_golden_cross has problem, stop use it for now
+        #ema_golden_cross = self._is_ema_golden_cross() #and self._is_long_price_under_highest_price_percent(long_price)
+        ema_golden_cross = False
         has_four_green = self._has_four_green()
         if (macd_signal or ema_golden_cross or has_four_green) and not is_on_ranging:
             return True
@@ -166,6 +168,11 @@ class EmaCrossWithMacdStrategy(StrategyBase):
         return False
 
     def _is_macd_slope_change_to_positive(self):
+        """
+        :macd slope change to positive
+        :ema under smallest hist bar
+        :ema assistant under smallest hist bar
+        """
         changed = 0 > self._macd[-1] > self._macd[-2]
         if changed:
             #make sure the last dea smaller than the min hist bar
