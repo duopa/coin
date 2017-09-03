@@ -219,6 +219,12 @@ class EmaCrossWithMacdStrategy(StrategyBase):
                 has_four_green = False
         if has_four_green:
             highes = self._get_value_from_kline(four_kline, 2)
+            lows = self._get_value_from_kline(four_kline, 3)
+            #:make sure low of the last two candle above ema_quick
+            # |
+            # /
+            if lows[-1] <= self._ema_quick[-1] or lows[-2] <= self._ema_quick[-2]:
+                return False
             #:make sure close step up
             for i in range(-1, -4, -1):
                 if self._close[i] <= self._close[i-1] or highes[i] <= highes[i-1]:
@@ -228,7 +234,6 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             if diff > self._config['four_green_price_threshold']:
                 return False
             #:make sure the kline like a bar, not a star
-            lows = self._get_value_from_kline(four_kline, 3)
             for i in range(-1, -5, -1):
                 if highes[i] != lows[i]:
                     bar_percent = (self._close[i] - opens[i]) / (highes[i] - lows[i])
