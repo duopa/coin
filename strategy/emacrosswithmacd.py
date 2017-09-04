@@ -233,8 +233,12 @@ class EmaCrossWithMacdStrategy(StrategyBase):
             diff = (self._close[-1] - opens[-4]) / opens[-4]
             if diff > self._config['four_green_price_threshold']:
                 return False
-            #:make sure the kline like a bar, not a star
+
             for i in range(-1, -5, -1):
+                #:if any candle price up excess threshold, then False
+                if (self._close[i] - opens[i]) > self._config['four_green_price_single_threshold']:
+                    return False
+                #:make sure the kline like a bar, not a star
                 if highes[i] != lows[i]:
                     bar_percent = (self._close[i] - opens[i]) / (highes[i] - lows[i])
                     if abs(bar_percent) < 0.6:
