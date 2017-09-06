@@ -236,7 +236,8 @@ class EmaCrossWithMacdStrategy(StrategyBase):
 
             for i in range(-1, -5, -1):
                 #:if any candle price up excess threshold, then False
-                if (self._close[i] - opens[i]) > self._config['four_green_price_single_threshold']:
+                diff = (self._close[i] - opens[i]) / opens[i]
+                if diff > self._config['four_green_price_single_threshold']:
                     return False
                 #:make sure the kline like a bar, not a star
                 if highes[i] != lows[i]:
